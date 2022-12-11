@@ -39,6 +39,10 @@ func TestTaskStorage_Delete(t *testing.T) {
 	created, err := tstore.Create(newTask)
 	assert.NoError(t, err)
 
+	tasks, err = tstore.Get()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, tasks)
+
 	err = tstore.Delete(created.TaskID)
 	assert.NoError(t, err)
 
