@@ -88,6 +88,12 @@ type taskStorage struct {
 	idIdx index[uint64]
 }
 
+func newTaskStorage() *taskStorage {
+	return &taskStorage{
+		idIdx: newIndex[uint64](),
+	}
+}
+
 func (t *taskStorage) all() refSet {
 	set := refSet{}
 	for i := range t.idIdx.ref {
@@ -139,7 +145,7 @@ func (t *taskStorage) Create(task Task) (Task, error) {
 	t.mux.Lock()
 	defer t.mux.Unlock()
 	newTask := task.Copy()
-	newRef := len(t.id) + 1
+	newRef := len(t.id)
 	newID := taskSeq()
 	newTask.TaskID = newID
 	t.id = append(t.id, newID)
