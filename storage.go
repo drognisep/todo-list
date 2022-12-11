@@ -65,17 +65,21 @@ func (s refSet) intersect(other refSet) refSet {
 	return xref
 }
 
-var taskSeq = func() func() uint64 {
+func refSequence(seqStart ...uint64) func() uint64 {
 	var mux sync.Mutex
-	start := uint64(1)
+	next := uint64(1)
+	if len(seqStart) == 1 {
+		next = seqStart[0]
+	}
+
 	return func() uint64 {
 		mux.Lock()
 		defer mux.Unlock()
-		rval := start
-		start++
-		return rval
+		val := next
+		next++
+		return val
 	}
-}()
+}
 
 var _ TaskStorage = (*taskStorage)(nil)
 
@@ -86,11 +90,13 @@ type taskStorage struct {
 	desc  []string
 	done  []bool
 	idIdx index[uint64]
+	seq   func() uint64
 }
 
 func newTaskStorage() *taskStorage {
 	return &taskStorage{
 		idIdx: newIndex[uint64](),
+		seq:   refSequence(),
 	}
 }
 
@@ -102,21 +108,32 @@ func (t *taskStorage) all() refSet {
 	return set
 }
 
-func (t *taskStorage) Get() ([]Task, error) {
+func (t *taskStorage) Get(filters ...TaskFilter) ([]Task, error) {
 	t.mux.RLock()
 	defer t.mux.RUnlock()
-	tblLen := lenIndex(t.idIdx)
-	tasks := make([]Task, tblLen)
+	var tasks []Task
 	refs := t.all()
-	for i := range refs {
-		tasks[i] = Task{
-			TaskID:      t.id[i],
-			Name:        t.name[i],
-			Description: t.desc[i],
-			Done:        t.done[i],
+collect:
+	for ref := range refs {
+		for _, filter := range filters {
+			if !filter(t, ref) {
+				continue collect
+			}
 		}
+		tasks = append(tasks, Task{
+			ID:          t.id[ref],
+			Name:        t.name[ref],
+			Description: t.desc[ref],
+			Done:        t.done[ref],
+		})
 	}
 	return tasks, nil
+}
+
+func (t *taskStorage) Count() (int, error) {
+	t.mux.RLock()
+	defer t.mux.RUnlock()
+	return lenIndex(t.idIdx), nil
 }
 
 func (t *taskStorage) getRef(ref int) (Task, bool) {
@@ -126,7 +143,7 @@ func (t *taskStorage) getRef(ref int) (Task, bool) {
 	}
 
 	return Task{
-		TaskID:      id,
+		ID:          id,
 		Name:        t.name[ref],
 		Description: t.desc[ref],
 		Done:        t.done[ref],
@@ -144,17 +161,16 @@ func (t *taskStorage) getID(id uint64) (Task, bool) {
 func (t *taskStorage) Create(task Task) (Task, error) {
 	t.mux.Lock()
 	defer t.mux.Unlock()
-	newTask := task.Copy()
 	newRef := len(t.id)
-	newID := taskSeq()
-	newTask.TaskID = newID
+	newID := t.seq()
+	task.ID = newID
 	t.id = append(t.id, newID)
 	t.name = append(t.name, task.Name)
 	t.desc = append(t.desc, task.Description)
 	t.done = append(t.done, task.Done)
 	addIndex(t.idIdx, newRef, newID)
 
-	return newTask, nil
+	return task, nil
 }
 
 func (t *taskStorage) Update(id uint64, req Task) (Task, error) {
@@ -173,7 +189,7 @@ func (t *taskStorage) Update(id uint64, req Task) (Task, error) {
 }
 
 func (t *taskStorage) update(newState Task) error {
-	id := newState.TaskID
+	id := newState.ID
 	ref, _ := t.idIdx.val[id]
 
 	t.id[ref] = id

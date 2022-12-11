@@ -4,8 +4,17 @@ import (
 	"errors"
 )
 
+type TaskFilter = func(t *taskStorage, ref int) bool
+
+func WithID(id uint64) TaskFilter {
+	return func(t *taskStorage, ref int) bool {
+		return t.id[ref] == id
+	}
+}
+
 type TaskStorage interface {
-	Get() ([]Task, error)
+	Get(...TaskFilter) ([]Task, error)
+	Count() (int, error)
 	Create(Task) (Task, error)
 	Update(uint64, Task) (Task, error)
 	Delete(uint64) error
