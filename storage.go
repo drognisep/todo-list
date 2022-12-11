@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	ErrIDNotFound = errors.New("specified ID not found")
-	zeroTask      = Task{}
+	ErrIDNotFound  = errors.New("specified ID not found")
+	ErrAmbiguousID = errors.New("ambiguous ID detected")
+	zeroTask       = Task{}
 )
 
 type index[T comparable] struct {

@@ -1,9 +1,5 @@
 package main
 
-import (
-	"errors"
-)
-
 type TaskFilter = func(t *taskStorage, ref int) bool
 
 func WithID(id uint64) TaskFilter {
@@ -24,11 +20,50 @@ type TaskController struct {
 	store TaskStorage
 }
 
-func NewTaskController(storage TaskStorage) (*TaskController, error) {
-	if storage == nil {
-		return nil, errors.New("nil TaskStorage dependency")
-	}
+func NewTaskController() (*TaskController, error) {
 	return &TaskController{
-		store: storage,
+		store: newTaskStorage(),
 	}, nil
+}
+
+func (c *TaskController) GetTaskByID(id uint64) (Task, error) {
+	tasks, err := c.store.Get(WithID(id))
+	if err != nil {
+		return zeroTask, err
+	}
+	if len(tasks) != 1 {
+		return zeroTask, ErrAmbiguousID
+	}
+	return tasks[0], nil
+}
+
+func (c *TaskController) GetAllTasks() ([]Task, error) {
+	tasks, err := c.store.Get()
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+func (c *TaskController) CreateTask(task Task) (Task, error) {
+	created, err := c.store.Create(task)
+	if err != nil {
+		return zeroTask, err
+	}
+	return created, nil
+}
+
+func (c *TaskController) UpdateTask(id uint64, task Task) (Task, error) {
+	updated, err := c.store.Update(id, task)
+	if err != nil {
+		return zeroTask, err
+	}
+	return updated, nil
+}
+
+func (c *TaskController) DeleteTask(id uint64) error {
+	if err := c.store.Delete(id); err != nil {
+		return err
+	}
+	return nil
 }
