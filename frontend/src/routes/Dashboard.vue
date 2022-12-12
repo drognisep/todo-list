@@ -1,6 +1,6 @@
 <template>
-  <loading v-if="waiting !== 0"/>
-  <div v-if="waiting === 0" class="container">
+  <loading v-if="loading"/>
+  <div v-if="!loading" class="container">
     <div class="line"><h3>Task Count: </h3>
       <p>{{ count }}</p></div>
   </div>
@@ -23,7 +23,7 @@ export default {
     this.taskCount();
   },
   methods: {
-    loading() {
+    startLoading() {
       this.waiting++;
     },
     doneLoading() {
@@ -32,7 +32,7 @@ export default {
       }
     },
     taskCount() {
-      this.loading()
+      this.startLoading()
       Count()
           .then(count => {
             this.count = count;
@@ -43,6 +43,11 @@ export default {
           .then(() => this.doneLoading());
     }
   },
+  computed: {
+    loading() {
+      return this.waiting !== 0;
+    },
+  }
 }
 </script>
 
