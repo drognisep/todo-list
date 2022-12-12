@@ -1,8 +1,14 @@
+* {
+    box-sizing: border-box;
+}
+
 :root {
     --bg-color: #222222;
     --bg-lighter-color: #333333;
     --fg-color: #e6e6e6;
     --toolbar-height: 48px;
+    --bg-highlight: #432244;
+    --fg-highlight: #ffc5ff;
 }
 
 html {
