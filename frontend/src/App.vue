@@ -1,9 +1,10 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'</script>
+import TopBar from "./components/TopBar.vue";
+import MainView from "./components/MainView.vue";</script>
 
 <template>
-  <img id="logo" alt="Wails logo" src="./assets/images/logo-universal.png"/>
-  <HelloWorld/>
+  <TopBar/>
+  <MainView/>
 </template>
 
 <style>
