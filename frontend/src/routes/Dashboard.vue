@@ -1,28 +1,46 @@
 <template>
-  <div class="container">
+  <loading v-if="waiting !== 0"/>
+  <div v-if="waiting === 0" class="container">
     <div class="line"><h3>Task Count: </h3>
       <p>{{ count }}</p></div>
   </div>
 </template>
 
 <script>
-import { Count } from "../wailsjs/go/main/TaskController.js";
+import {Count} from "../wailsjs/go/main/TaskController.js";
+import Loading from "../components/Loading.vue";
 
 export default {
   name: "Dashboard",
+  components: {Loading},
   data: () => {
     return {
-      count: -1,
+      waiting: 0,
+      count: 0,
     }
   },
   created() {
-    this.taskCount()
+    this.taskCount();
   },
   methods: {
+    loading() {
+      this.waiting++;
+    },
+    doneLoading() {
+      if (this.waiting > 0) {
+        this.waiting--;
+      }
+    },
     taskCount() {
-      return Count().then(count => {
-        this.count = count;
-      }).catch(err => console.error);
+      this.loading()
+      Count()
+          .then(count => {
+            this.count = count;
+          })
+          .catch(err => {
+            console.error("Error loading task count: " + err);
+          })
+          .then(() => this.doneLoading());
     }
   },
 }

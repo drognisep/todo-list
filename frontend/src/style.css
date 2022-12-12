@@ -1,14 +1,23 @@
 * {
     box-sizing: border-box;
+    user-select: none;
 }
 
 :root {
     --bg-color: #222222;
     --bg-lighter-color: #333333;
     --fg-color: #e6e6e6;
-    --toolbar-height: 48px;
+    --toolbar-height: 40px;
     --bg-highlight: #432244;
     --fg-highlight: #ffc5ff;
+    --overlay-color: #2f2f2fE6;
+    --z-toolbar: 1000;
+    --z-overlay: 900;
+    --z-dialog: 800;
+    --z-dialog-overlay: 799;
+    --z-side-panel: 600;
+    --z-side-panel-overlay: 599;
+    --z-content: 500;
 }
 
 html {
