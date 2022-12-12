@@ -45,6 +45,10 @@ func (c *TaskController) GetAllTasks() ([]Task, error) {
 	return tasks, nil
 }
 
+func (c *TaskController) Count() (int, error) {
+	return c.store.Count()
+}
+
 func (c *TaskController) CreateTask(task Task) (Task, error) {
 	created, err := c.store.Create(task)
 	if err != nil {

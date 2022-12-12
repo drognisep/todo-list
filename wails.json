@@ -9,5 +9,6 @@
   "author": {
     "name": "Doug Saylor",
     "email": "doug@saylorsolutions.com"
-  }
+  },
+  "wailsjsdir": "frontend/src"
 }
