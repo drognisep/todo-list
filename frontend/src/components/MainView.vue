@@ -1,12 +1,15 @@
 <template>
 <div id="main-view">
-
+  <RouterView></RouterView>
 </div>
 </template>
 
 <script>
+import {RouterView} from 'vue-router';
+
 export default {
-  name: "MainView"
+  name: "MainView",
+  components: [RouterView],
 }
 </script>
 
@@ -17,5 +20,6 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
+  overflow: hidden;
 }
 </style>

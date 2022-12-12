@@ -1,14 +1,18 @@
 <template>
   <div id="topbar">
     <h3 id="brand-text">Tasks</h3>
-    <p class="link">All Tasks</p>
-    <p class="link">Task Search</p>
+    <RouterLink to="/" class="link">Dashboard</RouterLink>
+    <RouterLink to="/allTasks" class="link">All Tasks</RouterLink>
+    <RouterLink to="/searchTasks" class="link">Task Search</RouterLink>
   </div>
 </template>
 
 <script>
+import {RouterLink} from 'vue-router';
+
 export default {
-  name: "TopBar"
+  name: "TopBar",
+  components: [RouterLink],
 }
 </script>
 
@@ -21,7 +25,8 @@ export default {
   height: var(--toolbar-height);
   background-color: var(--bg-lighter-color);
   box-shadow: black 0 0 5px;
-  --text-shadow: black 0 0 8px
+  --text-shadow: black 0 0 8px;
+  padding: 0 0 0 16px;
 }
 
 #topbar > * {
@@ -37,12 +42,14 @@ export default {
   font-weight: bold;
   height: var(--toolbar-height);
   line-height: var(--toolbar-height);
-  margin: 0 32px 0 16px;
+  margin: 0 32px 0 0;
   cursor: default;
   text-shadow: var(--text-shadow);
 }
 
 #topbar > .link {
+  color: var(--fg-color);
+  text-decoration: none;
   position: relative;
   top: -1px;
   padding: 0 8px;
@@ -51,7 +58,7 @@ export default {
   transition: all 200ms linear;
 }
 
-#topbar > .link:hover, #topbar > .link.active {
+#topbar > .link:hover, #topbar > .link.router-link-active {
   text-shadow: var(--text-shadow);
   color: var(--fg-highlight);
   background-color: var(--bg-highlight);
