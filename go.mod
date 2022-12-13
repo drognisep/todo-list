@@ -1,4 +1,4 @@
-module changeme
+module todo-list
 
 go 1.18
 
