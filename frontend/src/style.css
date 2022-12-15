@@ -11,6 +11,8 @@
     --bg-highlight: #432244;
     --bg-highlight-dark: #391c3a;
     --fg-highlight: #ffc5ff;
+    --fg-danger: red;
+    --fg-happy: #00c700;
     --overlay-color: #2f2f2fE6;
     --border-light: 2px solid var(--overlay-color);
     --border-dark: 2px solid #181818;
