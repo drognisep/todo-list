@@ -63,7 +63,13 @@ input[type=submit], button {
     cursor: pointer;
 }
 
-input[type=submit]:active, button:active {
+input[type=submit]:disabled, button:disabled {
+    background-color: var(--bg-color-light);
+    color: gray;
+    cursor: not-allowed;
+}
+
+input[type=submit]:active:not(*:disabled), button:active:not(*:disabled) {
     background-color: var(--bg-highlight-dark);
     border-right: 2px solid var(--bg-color);
     border-bottom: 2px solid var(--bg-color);
@@ -75,6 +81,6 @@ input[type=submit].secondary, button.secondary {
     background-color: var(--bg-color-light);
 }
 
-input[type=submit].secondary:active, button.secondary:active {
+input[type=submit].secondary:active:not(*:disabled), button.secondary:active:not(*:disabled) {
     background-color: var(--bg-color);
 }
