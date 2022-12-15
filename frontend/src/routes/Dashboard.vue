@@ -1,6 +1,6 @@
 <template>
   <loading v-if="loading"/>
-  <div v-if="!loading" class="container">
+  <div v-else class="container">
     <div class="line"><h3>Task Count: </h3>
       <p>{{ count }}</p></div>
   </div>

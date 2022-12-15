@@ -1,5 +1,5 @@
 <template>
-  <div class="overlay" @click.prevent.stop>
+  <div class="overlay" @click.prevent.stop="emitClick">
     <slot></slot>
   </div>
 </template>
@@ -7,6 +7,11 @@
 <script>
 export default {
   name: "Overlay",
+  methods: {
+    emitClick() {
+      this.$emit("overlayClicked")
+    },
+  }
 }
 </script>
 

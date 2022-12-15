@@ -3,8 +3,8 @@
     <img alt="tasks" id="brand-img" src="../assets/images/gear.svg"/>
     <h3 id="brand-text">Tasks</h3>
     <RouterLink to="/" class="link">Dashboard</RouterLink>
-    <RouterLink to="/allTasks" class="link">All Tasks</RouterLink>
-    <RouterLink to="/searchTasks" class="link">Task Search</RouterLink>
+    <RouterLink to="/allTasks" class="link">Tasks</RouterLink>
+    <RouterLink to="/searchTasks" class="link">Search</RouterLink>
   </div>
 </template>
 
@@ -24,7 +24,7 @@ export default {
   left: 0;
   right: 0;
   height: var(--toolbar-height);
-  background-color: var(--bg-lighter-color);
+  background-color: var(--bg-color-light);
   box-shadow: black 0 0 5px;
   padding: 0 0 0 16px;
   z-index: var(--z-toolbar);
@@ -61,7 +61,7 @@ export default {
   color: var(--fg-color);
   text-decoration: none;
   position: relative;
-  top: -1px;
+  top: -2px;
   padding: 0 8px;
   margin: 0;
   cursor: pointer;
