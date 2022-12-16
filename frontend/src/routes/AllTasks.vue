@@ -7,28 +7,31 @@
         <p>ID</p>
         <p>Task Name</p>
         <p>Description</p>
-        <p>Status</p>
+        <p>Actions</p>
       </div>
       <div v-if="noTasks" class="row empty">
         <td colspan="4"><h3>No tasks found</h3></td>
       </div>
-      <div v-else v-for="task in tasks" :key="task.id" class="row">
-        <p :class="task.done ? 'done': ''">{{ task.id }}</p>
-        <p :class="task.done ? 'done': ''">{{ task.name }}</p>
-        <p :class="task.done ? 'done': ''">{{ task.description }}</p>
-        <p :class="task.done ? 'done': ''" @click="toggleTaskDone(task.id)">{{ task.done ? "Done" : "Not Done" }}</p>
+      <div v-else v-for="task in tasks" :key="task.id" :class="task.done ? 'row done' : 'row'">
+        <p>{{ task.id }}</p>
+        <p>{{ task.name }}</p>
+        <p>{{ task.description }}</p>
+        <div>
+          <span class="material-icons check" @click="toggleTaskDone(task.id)">check</span>
+          <span class="material-icons delete" @click="deleteTask(task.id)">delete</span>
+        </div>
       </div>
     </div>
   </div>
   <modal v-show="newTasksShown" @dialogClose="toggleNewTasks" title="Create Task">
-    <create-task @clickedCancel="toggleNewTasks" @taskCreated="addNewTask"></create-task>
+    <create-task @clickedCancel="toggleNewTasks" @taskCreated="taskCreated"></create-task>
   </modal>
 </template>
 
 <script>
 import loadState from "../loadState.js";
 import Loading from "../components/Loading.vue";
-import {GetAllTasks, UpdateTask} from "../wailsjs/go/main/TaskController.js";
+import {GetAllTasks, UpdateTask, DeleteTask} from "../wailsjs/go/main/TaskController.js";
 import Modal from "../components/Modal.vue";
 import CreateTask from "../components/CreateTask.vue";
 
@@ -36,7 +39,7 @@ export default {
   name: "AllTasks",
   components: {Loading, Modal, CreateTask},
   mixins: [loadState],
-  data: () => {
+  data() {
     return {
       tasks: [],
       newTasksShown: false,
@@ -58,14 +61,9 @@ export default {
     toggleNewTasks() {
       this.newTasksShown = !this.newTasksShown
     },
-    addNewTask(data) {
-      if (data) {
-        if (!this.tasks) {
-          this.tasks = [];
-        }
-        this.tasks.push(data);
-        this.sortTasks();
-      }
+    taskCreated() {
+      this.newTasksShown = false;
+      this.getTasks();
     },
     toggleTaskDone(id) {
       this.tasks.forEach((item, i) => {
@@ -83,6 +81,15 @@ export default {
               })
         }
       })
+    },
+    deleteTask(id) {
+      this.startLoading();
+      DeleteTask(id)
+          .catch(console.error)
+          .then(() => {
+            this.getTasks();
+            this.doneLoading();
+          })
     },
     sortTasks() {
       this.tasks = this.tasks.sort((a, b) => {
@@ -174,16 +181,30 @@ export default {
   overflow: hidden;
 }
 
-.row > *:nth-child(4) {
+.row:not(*.header) > *:nth-child(4) {
+  display: flex;
+  position: relative;
+  top: 3px;
+  justify-content: center;
   text-align: center;
+}
+
+/*.row:not(.header) > *:nth-child(4).done:hover {*/
+/*  color: var(--fg-danger);*/
+/*}*/
+
+/*.row:not(.header) > *:nth-child(4):hover {*/
+/*  color: var(--fg-happy);*/
+/*}*/
+.row .material-icons {
   cursor: pointer;
 }
 
-.row:not(.header) > *:nth-child(4).done:hover {
+.row .delete:hover, .row.done .delete:hover {
   color: var(--fg-danger);
 }
 
-.row:not(.header) > *:nth-child(4):hover {
+.row .check:hover, .row.done .check:hover {
   color: var(--fg-happy);
 }
 
@@ -207,8 +228,11 @@ export default {
   text-align: center;
 }
 
-.row *.done {
+.row.done p {
   text-decoration: line-through;
+  color: gray;
+}
+.row.done .material-icons {
   color: gray;
 }
 </style>

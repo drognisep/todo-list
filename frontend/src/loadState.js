@@ -6,11 +6,11 @@ export default {
     },
     methods: {
         startLoading() {
-            this.waiting++;
+            this.loading++;
         },
         doneLoading() {
-            if (this.waiting > 0) {
-                this.waiting--;
+            if (this.loading > 0) {
+                this.loading--;
             }
         },
     },
