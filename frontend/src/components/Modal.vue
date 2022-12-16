@@ -5,7 +5,7 @@
       <div class="dialog-content">
         <slot></slot>
       </div>
-      <img class="dialog-x" alt="close button" src="../assets/images/control-x.svg" @click.stop.prevent="dialogClose"/>
+      <span class="material-icons dialog-x" @click.stop.prevent="dialogClose">close</span>
     </div>
   </overlay>
 </template>
@@ -51,11 +51,10 @@ export default {
 }
 
 .dialog .dialog-x {
+  color: var(--fg-color);
   position: absolute;
   top: 12px;
   right: 12px;
-  height: 16px;
-  width: 16px;
   cursor: pointer;
 }
 
