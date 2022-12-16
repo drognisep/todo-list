@@ -1,34 +1,31 @@
 <template>
-  <keep-alive>
-    <div class="content">
-      <loading v-show="isLoading"></loading>
-      <button v-show="!isLoading" id="new-task" @click.stop.prevent="this.newTasksShown = true">New Task</button>
-      <div v-show="!isLoading" class="table">
-        <div class="row header">
-          <p>ID</p>
-          <p>Task Name</p>
-          <p>Description</p>
-          <p>Status</p>
-        </div>
-        <div v-if="noTasks" class="row empty">
-          <td colspan="4"><h3>No tasks found</h3></td>
-        </div>
-        <div v-else v-for="task in tasks" :key="task.id" class="row">
-          <p :class="task.done ? 'done': ''">{{ task.id }}</p>
-          <p :class="task.done ? 'done': ''">{{ task.name }}</p>
-          <p :class="task.done ? 'done': ''">{{ task.description }}</p>
-          <p :class="task.done ? 'done': ''" @click="toggleTaskDone(task.id)">{{ task.done ? "Done" : "Not Done" }}</p>
-        </div>
+  <loading v-show="isLoading"></loading>
+  <div class="content">
+    <button v-show="!isLoading" id="new-task" @click.stop.prevent="this.newTasksShown = true">New Task</button>
+    <div v-show="!isLoading" class="table">
+      <div class="row header">
+        <p>ID</p>
+        <p>Task Name</p>
+        <p>Description</p>
+        <p>Status</p>
       </div>
-      <modal v-show="newTasksShown" @dialogClose="toggleNewTasks" title="Create Task">
-        <create-task @clickedCancel="toggleNewTasks" @taskCreated="addNewTask"></create-task>
-      </modal>
+      <div v-if="noTasks" class="row empty">
+        <td colspan="4"><h3>No tasks found</h3></td>
+      </div>
+      <div v-else v-for="task in tasks" :key="task.id" class="row">
+        <p :class="task.done ? 'done': ''">{{ task.id }}</p>
+        <p :class="task.done ? 'done': ''">{{ task.name }}</p>
+        <p :class="task.done ? 'done': ''">{{ task.description }}</p>
+        <p :class="task.done ? 'done': ''" @click="toggleTaskDone(task.id)">{{ task.done ? "Done" : "Not Done" }}</p>
+      </div>
     </div>
-  </keep-alive>
+  </div>
+  <modal v-show="newTasksShown" @dialogClose="toggleNewTasks" title="Create Task">
+    <create-task @clickedCancel="toggleNewTasks" @taskCreated="addNewTask"></create-task>
+  </modal>
 </template>
 
 <script>
-import {KeepAlive} from "vue";
 import loadState from "../loadState.js";
 import Loading from "../components/Loading.vue";
 import {GetAllTasks, UpdateTask} from "../wailsjs/go/main/TaskController.js";
@@ -37,7 +34,7 @@ import CreateTask from "../components/CreateTask.vue";
 
 export default {
   name: "AllTasks",
-  components: {Loading, Modal, CreateTask, KeepAlive},
+  components: {Loading, Modal, CreateTask},
   mixins: [loadState],
   data: () => {
     return {
@@ -67,6 +64,7 @@ export default {
           this.tasks = [];
         }
         this.tasks.push(data);
+        this.sortTasks();
       }
     },
     toggleTaskDone(id) {
