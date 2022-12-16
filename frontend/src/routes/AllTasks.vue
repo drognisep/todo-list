@@ -3,24 +3,23 @@
   <div class="content">
     <button v-show="!isLoading" id="new-task" @click.stop.prevent="this.newTasksShown = true">New Task</button>
     <div v-show="!isLoading" class="table">
-      <div class="row header">
+      <div class="header">
         <p>ID</p>
         <p>Task Name</p>
         <p>Description</p>
         <p>Actions</p>
       </div>
-      <div v-if="noTasks" class="row empty">
+      <div v-if="noTasks" class="empty">
         <td colspan="4"><h3>No tasks found</h3></td>
       </div>
-      <div v-else v-for="task in tasks" :key="task.id" :class="task.done ? 'row done' : 'row'">
-        <p>{{ task.id }}</p>
-        <p>{{ task.name }}</p>
-        <p>{{ task.description }}</p>
-        <div>
-          <span class="material-icons check" @click="toggleTaskDone(task.id)">check</span>
-          <span class="material-icons delete" @click="deleteTask(task.id)">delete</span>
-        </div>
-      </div>
+      <TaskRow
+          v-else
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+          @taskDone="toggleTaskDone"
+          @taskDeleted="deleteTask"
+      />
     </div>
   </div>
   <modal v-show="newTasksShown" @dialogClose="toggleNewTasks" title="Create Task">
@@ -31,13 +30,14 @@
 <script>
 import loadState from "../loadState.js";
 import Loading from "../components/Loading.vue";
-import {GetAllTasks, UpdateTask, DeleteTask} from "../wailsjs/go/main/TaskController.js";
+import {DeleteTask, GetAllTasks, UpdateTask} from "../wailsjs/go/main/TaskController.js";
 import Modal from "../components/Modal.vue";
 import CreateTask from "../components/CreateTask.vue";
+import TaskRow from "../components/TaskRow.vue";
 
 export default {
   name: "AllTasks",
-  components: {Loading, Modal, CreateTask},
+  components: {Loading, Modal, CreateTask, TaskRow},
   mixins: [loadState],
   data() {
     return {
@@ -140,99 +140,36 @@ export default {
   border: var(--border-dark);
 }
 
-.table > .row:first-child > *:first-child {
+.header {
+  font-weight: bold;
+  background-color: var(--bg-color-light);
+}
+
+.header > * {
+  text-align: center;
+}
+
+.header > *:first-child {
   border-top-left-radius: calc(var(--radius) - 2px);
 }
 
-.table > .row:first-child > *:last-child {
+.header > *:last-child {
   border-top-right-radius: calc(var(--radius) - 2px);
 }
 
-.table > .row:last-child > *:first-child {
-  border-bottom-left-radius: calc(var(--radius) - 2px);
+.empty > * {
+  text-align: center;
 }
 
-.table > .row:last-child > *:last-child {
-  border-bottom-right-radius: calc(var(--radius) - 2px);
-}
-
-.row {
+.empty, .header {
   display: table-row;
   border: 2px solid transparent;
 }
 
-.row > * {
+.empty > *, .header > * {
   display: table-cell;
   padding: 4px 8px;
   background-color: transparent;
   border-right: var(--border-light);
-}
-
-.row > *:last-child {
-  border-right: none;
-}
-
-.row > *:nth-child(1) {
-  text-align: right;
-}
-
-.row > *:nth-child(2), .row > *:nth-child(3) {
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.row:not(*.header) > *:nth-child(4) {
-  display: flex;
-  position: relative;
-  top: 3px;
-  justify-content: center;
-  text-align: center;
-}
-
-/*.row:not(.header) > *:nth-child(4).done:hover {*/
-/*  color: var(--fg-danger);*/
-/*}*/
-
-/*.row:not(.header) > *:nth-child(4):hover {*/
-/*  color: var(--fg-happy);*/
-/*}*/
-.row .material-icons {
-  cursor: pointer;
-}
-
-.row .delete:hover, .row.done .delete:hover {
-  color: var(--fg-danger);
-}
-
-.row .check:hover, .row.done .check:hover {
-  color: var(--fg-happy);
-}
-
-.row:nth-child(even) {
-  background-color: var(--bg-color);
-}
-
-.row:nth-child(odd) {
-  background-color: var(--bg-color-light);
-}
-
-.row.header {
-  font-weight: bold;
-}
-
-.row.header > * {
-  text-align: center;
-}
-
-.row.empty > * {
-  text-align: center;
-}
-
-.row.done p {
-  text-decoration: line-through;
-  color: gray;
-}
-.row.done .material-icons {
-  color: gray;
 }
 </style>
