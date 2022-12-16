@@ -1,7 +1,7 @@
 <template>
   <overlay @overlayClicked="dialogClose">
     <div class="dialog" @click.stop.prevent>
-      <h1 class="dialog-header">{{this.$props.title}}</h1>
+      <h1 class="dialog-header">{{ this.$props.title }}</h1>
       <div class="dialog-content">
         <slot></slot>
       </div>
@@ -19,6 +19,7 @@ export default {
   props: {
     "title": String,
   },
+  emits: ["dialogClose"],
   methods: {
     dialogClose() {
       this.$emit("dialogClose")

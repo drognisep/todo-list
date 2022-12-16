@@ -1,13 +1,13 @@
 <template>
-  <table style="width:100%">
+  <table class="modal-create">
     <tbody>
     <tr>
       <td><label for="task-summary">Summary</label></td>
-      <td><input id="task-summary" type="text" v-model="name"/></td>
+      <td><input id="task-summary" type="text" v-model="createState.name"/></td>
     </tr>
     <tr>
       <td><label for="task-description">Description</label></td>
-      <td><textarea id="task-description" v-model="description"></textarea></td>
+      <td><textarea id="task-description" v-model="createState.description"></textarea></td>
     </tr>
     <tr>
       <td colspan="2">
@@ -28,24 +28,17 @@ export default {
   name: "CreateTask",
   data() {
     return {
-      name: "",
-      description: "",
-      done: false,
+      createState: {
+        name: "",
+        description: "",
+        done: false,
+      },
     }
   },
   methods: {
     clickedSubmit() {
-      let data = {
-        name: this.name,
-        description: this.description,
-        done: this.done,
-      }
-      console.log("Creating task");
-      console.log(data);
-      CreateTask(data)
+      CreateTask(this.createState)
           .then(created => {
-            console.log("Created task");
-            console.log(created);
             this.$emit("taskCreated", created);
           })
           .then(() => {
@@ -58,31 +51,35 @@ export default {
       this.$emit("clickedCancel");
     },
     resetState() {
-      this.name = "";
-      this.description = "";
-      this.done = false;
+      this.createState = {
+        name: "",
+        description: "",
+        done: false,
+      }
     },
   },
   computed: {
     submitDisabled() {
-      return this.name === "";
+      return this.createState.name === "";
     },
   }
 }
 </script>
 
 <style scoped>
-input[type="text"], textarea, input[type="text"]:focus, textarea:focus {
-  background-color: var(--bg-color-light);
-  color: var(--fg-color);
-}
-input[type="text"] {
+.modal-create {
   width: 100%;
+  font-size: 1.2em;
 }
-textarea {
-  width: 100%;
+
+.modal-create input[type="text"], .modal-create textarea {
+  font-size: 1.2em;
+}
+
+.modal-create textarea {
   min-height: 150px;
 }
+
 tr > td:first-child {
   width: 100px;
 }

@@ -7,6 +7,7 @@
 <script>
 export default {
   name: "Overlay",
+  emits: ["overlayClicked"],
   methods: {
     emitClick() {
       this.$emit("overlayClicked")

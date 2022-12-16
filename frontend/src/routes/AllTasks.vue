@@ -19,11 +19,12 @@
           :task="task"
           @taskDone="toggleTaskDone"
           @taskDeleted="deleteTask"
+          @taskUpdate="taskUpdate"
       />
     </div>
   </div>
   <modal v-show="newTasksShown" @dialogClose="toggleNewTasks" title="Create Task">
-    <create-task @clickedCancel="toggleNewTasks" @taskCreated="taskCreated"></create-task>
+    <CreateTask @clickedCancel="toggleNewTasks" @taskCreated="taskCreated"></CreateTask>
   </modal>
 </template>
 
@@ -81,6 +82,19 @@ export default {
               })
         }
       })
+    },
+    taskUpdate(updated) {
+      this.startLoading();
+      console.log("Received update");
+      console.log(updated);
+      UpdateTask(updated.id, updated)
+          .then(() => {
+            this.getTasks();
+          })
+          .catch(console.error)
+          .then(() => {
+            this.doneLoading();
+          })
     },
     deleteTask(id) {
       this.startLoading();
