@@ -1,8 +1,8 @@
 <template>
   <div :class="['row', rowClasses]">
     <p>{{ $props.task.id }}</p>
-    <p @click="toggleShowUpdate">{{ $props.task.name }}</p>
-    <p>{{ $props.task.description }}</p>
+    <p @click="toggleShowUpdate">{{ truncatedName }}</p>
+    <p>{{ truncatedDesc }}</p>
     <div class="actions">
       <span class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
       <span class="material-icons delete" @click="$emit('taskDeleted', task.id)">delete</span>
@@ -35,6 +35,9 @@
 
 <script>
 import Modal from "./Modal.vue";
+
+const descLimit = 50;
+const nameLimit = 50;
 
 export default {
   name: "TaskRow",
@@ -83,6 +86,18 @@ export default {
         return "done"
       }
       return ""
+    },
+    truncatedName() {
+      if (this.$props.task.name.length > nameLimit) {
+        return this.$props.task.name.substring(0, nameLimit) + "...";
+      }
+      return this.$props.task.name;
+    },
+    truncatedDesc() {
+      if (this.$props.task.description.length > descLimit) {
+        return this.$props.task.description.substring(0, descLimit) + "...";
+      }
+      return this.$props.task.description;
     },
     updateTitle() {
       return "Update task #" + this.$props.task.id;
@@ -152,8 +167,12 @@ export default {
   color: var(--fg-danger);
 }
 
-.row .check:hover, .row.done .check:hover {
+.row .check:hover {
   color: var(--fg-happy);
+}
+
+.row.done .check:hover {
+  color: var(--fg-warn);
 }
 
 .row:nth-child(even) {
@@ -162,6 +181,10 @@ export default {
 
 .row:nth-child(odd) {
   background-color: var(--bg-color-light);
+}
+
+.row:nth-child(even):hover, .row:nth-child(odd):hover {
+  background-color: var(--bg-highlight);
 }
 
 .row.done p {

@@ -10,12 +10,12 @@
     --bg-color-light: #333333;
     --fg-color: #e6e6e6;
     --toolbar-height: 40px;
-    --bg-highlight: #432244;
+    --bg-highlight: #391d3a;
     --bg-highlight-dark: #391c3a;
     --fg-highlight: #ffc5ff;
     --fg-danger: red;
     --fg-happy: #00c700;
-    --fg-warn: #e8a90f;
+    --fg-warn: #e89c0f;
     --overlay-color: #2f2f2fE6;
     --border-light: 2px solid var(--overlay-color);
     --border-dark: 2px solid #181818;
