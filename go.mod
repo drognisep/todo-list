@@ -4,7 +4,9 @@ go 1.18
 
 require (
 	github.com/stretchr/testify v1.7.1
+	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
 	github.com/wailsapp/wails/v2 v2.2.0
+	go.etcd.io/bbolt v1.3.6
 )
 
 require (

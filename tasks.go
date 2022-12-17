@@ -1,12 +1,15 @@
 package main
 
-import "sort"
+import (
+	"github.com/timshannon/bolthold"
+	"sort"
+)
 
-type TaskFilter = func(t *taskStorage, ref int) bool
+type TaskFilter = func(query *bolthold.Query)
 
 func WithID(id uint64) TaskFilter {
-	return func(t *taskStorage, ref int) bool {
-		return t.id[ref] == id
+	return func(query *bolthold.Query) {
+		query.And(bolthold.Key).Eq(id)
 	}
 }
 
@@ -56,8 +59,12 @@ func (t *taskSorter) Swap(i, j int) {
 }
 
 func NewTaskController() (*TaskController, error) {
+	storage, err := newBoltStorage()
+	if err != nil {
+		return nil, err
+	}
 	return &TaskController{
-		store: newTaskStorage(),
+		store: storage,
 	}, nil
 }
 

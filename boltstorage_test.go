@@ -2,11 +2,19 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestTaskStorage_Create(t *testing.T) {
-	tstore := newTaskStorage()
+func TestNewBoltStorage(t *testing.T) {
+	_, cleanup := _newBoltStore(t)
+	cleanup()
+}
+
+func TestBoltStorage_Create(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
 
 	newTask := Task{
 		Name: "Some name",
@@ -25,8 +33,9 @@ func TestTaskStorage_Create(t *testing.T) {
 	assert.Equal(t, created, tasks[0])
 }
 
-func TestTaskStorage_Delete(t *testing.T) {
-	tstore := newTaskStorage()
+func TestBoltStorage_Delete(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
 
 	tasks, err := tstore.Get()
 	assert.NoError(t, err)
@@ -51,8 +60,9 @@ func TestTaskStorage_Delete(t *testing.T) {
 	assert.Empty(t, tasks)
 }
 
-func TestTaskStorage_Update(t *testing.T) {
-	tstore := newTaskStorage()
+func TestBoltStorage_Update(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
 
 	newTask := Task{
 		Name: "Some name",
@@ -79,8 +89,9 @@ func TestTaskStorage_Update(t *testing.T) {
 	assert.Equal(t, created.Name, tasks[0].Name)
 }
 
-func TestTaskStorage_Get_WithID(t *testing.T) {
-	tstore := newTaskStorage()
+func TestBoltStorage_Get_WithID(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
 
 	newTask := Task{
 		Name: "Some name",
@@ -102,4 +113,28 @@ func TestTaskStorage_Get_WithID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 1)
 	assert.Equal(t, uint64(1), tasks[0].ID)
+}
+
+func _newBoltStore(t *testing.T) (*boltStorage, func()) {
+	temp, err := os.MkdirTemp("", t.Name()+"_*")
+	if err != nil {
+		t.Fatal("Failed to create temp dir", err)
+	}
+
+	dbFile := filepath.Join(temp, "testDB.db")
+	t.Logf("Test DB file for '%s' is '%s'", t.Name(), dbFile)
+	storage, err := newBoltStorageAt(dbFile)
+	if err != nil {
+		t.Fatal("Failed to open DB file", err)
+	}
+	return storage, func() {
+		if err := storage.store.Close(); err != nil {
+			t.Log("Failed to close DB", err)
+			t.Fail()
+		}
+		if err := os.RemoveAll(temp); err != nil {
+			t.Log("Failed to cleanup temp dir", err)
+			t.Fail()
+		}
+	}
 }
