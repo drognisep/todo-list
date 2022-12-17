@@ -6,6 +6,7 @@ import (
 	"go.etcd.io/bbolt"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 const (
@@ -40,14 +41,47 @@ func newBoltStorageAt(file string) (*boltStorage, error) {
 	return &boltStorage{store: store}, nil
 }
 
+var _ sort.Interface = (*taskSorter)(nil)
+
+type taskSorter struct {
+	tasks []Task
+}
+
+func newTaskSorter(tasks []Task) *taskSorter {
+	return &taskSorter{tasks: tasks}
+}
+
+func (t *taskSorter) Len() int {
+	return len(t.tasks)
+}
+
+func (t *taskSorter) Less(i, j int) bool {
+	a, b := t.tasks[i], t.tasks[j]
+
+	switch {
+	case a.Done && !b.Done:
+		return false
+	case !a.Done && b.Done:
+		return true
+	case a.Priority > b.Priority:
+		return true
+	case a.ID < b.ID:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t *taskSorter) Swap(i, j int) {
+	t.tasks[i], t.tasks[j] = t.tasks[j], t.tasks[i]
+}
+
 func (b *boltStorage) Get(filter ...TaskFilter) ([]Task, error) {
 	query := new(bolthold.Query)
 
 	for _, f := range filter {
 		f(query)
 	}
-
-	query.SortBy("Done", "ID")
 
 	var found []Task
 	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {
@@ -59,6 +93,7 @@ func (b *boltStorage) Get(filter ...TaskFilter) ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	sort.Sort(newTaskSorter(found))
 	return found, nil
 }
 

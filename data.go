@@ -5,6 +5,7 @@ type Task struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Done        bool   `json:"done" boltholdIndex:"Done"`
+	Priority    int    `json:"priority" boltholdIndex:"Priority"`
 }
 
 func (t *Task) Copy() Task {
