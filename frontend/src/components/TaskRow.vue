@@ -58,9 +58,7 @@ export default {
   methods: {
     taskDone() {
       this.showDone = !this.showDone;
-      setTimeout(() => {
-        this.$emit('taskDone', this.$props.task.id);
-      }, 200);
+      this.$emit('taskDone', this.$props.task.id);
     },
     revertUpdateState() {
       this.updateState = {

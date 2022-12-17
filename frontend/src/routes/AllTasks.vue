@@ -48,16 +48,11 @@ export default {
   },
   methods: {
     getTasks() {
-      this.startLoading();
       GetAllTasks()
           .then(tasks => {
             this.tasks = tasks;
-            this.sortTasks();
           })
           .catch(console.error)
-          .then(() => {
-            this.doneLoading();
-          })
     },
     toggleNewTasks() {
       this.newTasksShown = !this.newTasksShown
@@ -70,21 +65,16 @@ export default {
       this.tasks.forEach((item, i) => {
         if (item.id === id) {
           item.done = !item.done;
-          this.startLoading();
           UpdateTask(id, item)
               .then(updated => {
                 this.tasks[i] = updated;
-                this.sortTasks();
+                this.getTasks();
               })
               .catch(console.error)
-              .then(() => {
-                this.doneLoading();
-              })
         }
       })
     },
     taskUpdate(updated) {
-      this.startLoading();
       console.log("Received update");
       console.log(updated);
       UpdateTask(updated.id, updated)
@@ -92,34 +82,14 @@ export default {
             this.getTasks();
           })
           .catch(console.error)
-          .then(() => {
-            this.doneLoading();
-          })
     },
     deleteTask(id) {
-      this.startLoading();
       DeleteTask(id)
           .catch(console.error)
           .then(() => {
             this.getTasks();
-            this.doneLoading();
           })
     },
-    sortTasks() {
-      this.tasks = this.tasks.sort((a, b) => {
-        if (a.done && !b.done) {
-          return 1;
-        } else if (!a.done && b.done) {
-          return -1;
-        }
-        if (a.id < b.id) {
-          return -1;
-        } else if (a.id > b.id) {
-          return 1;
-        }
-        return 0;
-      });
-    }
   },
   computed: {
     noTasks() {
@@ -127,7 +97,15 @@ export default {
     },
   },
   created() {
-    this.getTasks();
+    this.startLoading();
+    GetAllTasks()
+        .then(tasks => {
+          this.tasks = tasks;
+        })
+        .catch(console.error)
+        .then(() => {
+          this.doneLoading();
+        })
   }
 }
 </script>
