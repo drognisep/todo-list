@@ -1,5 +1,7 @@
 package main
 
+import "sort"
+
 type TaskFilter = func(t *taskStorage, ref int) bool
 
 func WithID(id uint64) TaskFilter {
@@ -18,6 +20,39 @@ type TaskStorage interface {
 
 type TaskController struct {
 	store TaskStorage
+}
+
+var _ sort.Interface = (*taskSorter)(nil)
+
+type taskSorter struct {
+	tasks []Task
+}
+
+func newTaskSorter(tasks []Task) *taskSorter {
+	return &taskSorter{tasks: tasks}
+}
+
+func (t *taskSorter) Len() int {
+	return len(t.tasks)
+}
+
+func (t *taskSorter) Less(i, j int) bool {
+	a, b := t.tasks[i], t.tasks[j]
+
+	switch {
+	case a.Done && !b.Done:
+		return false
+	case !a.Done && b.Done:
+		return true
+	case a.ID < b.ID:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t *taskSorter) Swap(i, j int) {
+	t.tasks[i], t.tasks[j] = t.tasks[j], t.tasks[i]
 }
 
 func NewTaskController() (*TaskController, error) {
@@ -42,7 +77,12 @@ func (c *TaskController) GetAllTasks() ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	sort.Sort(newTaskSorter(tasks))
 	return tasks, nil
+}
+
+func (c *TaskController) Count() (int, error) {
+	return c.store.Count()
 }
 
 func (c *TaskController) CreateTask(task Task) (Task, error) {
