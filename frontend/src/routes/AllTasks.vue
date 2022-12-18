@@ -17,7 +17,6 @@
           v-for="task in tasks"
           :key="task.id"
           :task="task"
-          @taskDone="toggleTaskDone"
           @taskDeleted="deleteTask"
           @taskUpdate="taskUpdate"
       />
@@ -65,19 +64,6 @@ export default {
             this.getTasks();
           })
           .catch(console.error)
-    },
-    toggleTaskDone(id) {
-      this.tasks.forEach((item, i) => {
-        if (item.id === id) {
-          item.done = !item.done;
-          UpdateTask(id, item)
-              .then(updated => {
-                this.tasks[i] = updated;
-                this.getTasks();
-              })
-              .catch(console.error)
-        }
-      })
     },
     taskUpdate(updated) {
       console.log("Received update");

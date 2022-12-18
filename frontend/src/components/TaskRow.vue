@@ -30,7 +30,7 @@ const nameLimit = 50;
 export default {
   name: "TaskRow",
   components: {Modal, TaskModal},
-  emits: ["taskDone", "taskDeleted", "taskUpdate"],
+  emits: ["taskDeleted", "taskUpdate"],
   props: {
     task: Object,
   },
@@ -43,24 +43,17 @@ export default {
   methods: {
     taskDone() {
       this.showDone = !this.showDone;
-      this.$emit('taskDone', this.$props.task.id);
+      let data = this.$props.task;
+      data.favorite = false;
+      data.done = this.showDone;
+      this.submitUpdate(data);
     },
     taskFavorite() {
       let data = this.$props.task;
       data.favorite = !data.favorite;
       this.submitUpdate(data);
     },
-    revertUpdateState() {
-      this.updateState = {
-        id: Number(this.$props.task.id),
-        name: String(this.$props.task.name),
-        description: String(this.$props.task.description),
-        done: Boolean(this.$props.task.done),
-        priority: Number(this.$props.task.priority),
-      }
-    },
     toggleShowUpdate() {
-      this.revertUpdateState();
       this.showUpdate = !this.showUpdate;
     },
     submitUpdate(state) {
