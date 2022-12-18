@@ -59,12 +59,14 @@ func (t *taskSorter) Less(i, j int) bool {
 	a, b := t.tasks[i], t.tasks[j]
 
 	switch {
-	case a.Done && !b.Done:
-		return false
 	case !a.Done && b.Done:
 		return true
+	case a.Done && !b.Done:
+		return false
 	case a.Priority > b.Priority:
 		return true
+	case a.Priority < b.Priority:
+		return false
 	case a.ID < b.ID:
 		return true
 	default:
