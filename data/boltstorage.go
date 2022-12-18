@@ -1,16 +1,14 @@
 package data
 
 import (
-	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/timshannon/bolthold"
 	"go.etcd.io/bbolt"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 )
 
 const (
@@ -159,10 +157,6 @@ func (b *boltStorage) Delete(id uint64) error {
 	return nil
 }
 
-var (
-	exportColumns = []string{"ID", "NAME", "DESCRIPTION", "DONE", "PRIORITY", "FAVORITE"}
-)
-
 func (b *boltStorage) Export(dir string) (outName string, err error) {
 	out, err := os.CreateTemp(dir, "taskstore_*.snapshot")
 	if err != nil {
@@ -172,38 +166,17 @@ func (b *boltStorage) Export(dir string) (outName string, err error) {
 		_ = out.Close()
 	}()
 
-	fi, err := out.Stat()
-	if err != nil {
-		return "", err
-	}
-	outName = filepath.Join(dir, fi.Name())
+	outName = out.Name()
 
-	writer := csv.NewWriter(out)
-	writer.UseCRLF = false
-	defer func() {
-		writer.Flush()
-	}()
-	err = writer.Write(exportColumns)
-	if err != nil {
-		return
-	}
+	writer := json.NewEncoder(out)
 
 	tasks, err := b.Get()
 	if err != nil {
 		return
 	}
-
-	buf := [6]string{}
-	for _, t := range tasks {
-		buf[0] = strconv.FormatUint(t.ID, 10)
-		buf[1] = t.Name
-		buf[2] = t.Description
-		buf[3] = strconv.FormatBool(t.Done)
-		buf[4] = strconv.FormatInt(int64(t.Priority), 10)
-		buf[5] = strconv.FormatBool(t.Favorite)
-		if err := writer.Write(buf[:]); err != nil {
-			return outName, err
-		}
+	err = writer.Encode(exportModel{Tasks: tasks})
+	if err != nil {
+		return
 	}
 
 	return outName, nil
@@ -218,17 +191,16 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		_ = in.Close()
 	}()
 
-	reader := csv.NewReader(in)
-	header, err := reader.Read()
-	if err != nil {
+	reader := json.NewDecoder(in)
+	var model exportModel
+	if err := reader.Decode(&model); err != nil {
 		return err
 	}
+
 	tx, err := b.store.Bolt().Begin(true)
 	if err != nil {
 		return err
 	}
-	fn := b.mapInput(header)
-
 	rollback := func(err error) error {
 		if rerr := tx.Rollback(); rerr != nil {
 			return fmt.Errorf("%w: %v", err, rerr)
@@ -236,18 +208,12 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		return err
 	}
 
-	for {
-		row, err := reader.Read()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return rollback(err)
-		}
-		var imported Task
-		imported, err = fn(imported, row)
-		if err != nil {
-			return rollback(err)
+	for _, imported := range model.Tasks {
+		switch {
+		case imported.ID == 0:
+			return rollback(fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/unset ID field"))
+		case len(imported.Name) == 0:
+			return rollback(fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/empty name field"))
 		}
 
 		var dupe Task
@@ -291,83 +257,4 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		return rollback(err)
 	}
 	return nil
-}
-
-type mapFunc func(task Task, row []string) (Task, error)
-
-func (b *boltStorage) mapInput(header []string) mapFunc {
-	inputIdx := [6]int{-1, -1, -1, -1, -1, -1}
-
-	for i, base := range exportColumns {
-		for j, in := range header {
-			if base == in {
-				inputIdx[i] = j
-				break
-			}
-		}
-	}
-
-	return func(task Task, row []string) (Task, error) {
-		for i, idx := range inputIdx {
-			switch i {
-			case 0:
-				if idx == -1 {
-					return ZeroTask, fmt.Errorf("%w: %s", ErrUnmappedReqdImportField, "missing ID field")
-				}
-				id, err := strconv.ParseUint(row[idx], 10, 64)
-				if err != nil {
-					return ZeroTask, fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, err)
-				}
-				task.ID = id
-			case 1:
-				if idx == -1 {
-					return ZeroTask, fmt.Errorf("%w: %s", ErrUnmappedReqdImportField, "missing name field")
-				}
-				if len(row[idx]) == 0 {
-					return ZeroTask, fmt.Errorf("%w: %s", ErrUnmappedReqdImportField, "empty name field")
-				}
-				task.Name = row[idx]
-			case 2:
-				if idx == -1 {
-					task.Description = ""
-					continue
-				}
-				task.Description = row[idx]
-			case 3:
-				if idx == -1 {
-					task.Done = false
-					continue
-				}
-				b, err := strconv.ParseBool(row[idx])
-				if err != nil {
-					task.Done = false
-					continue
-				}
-				task.Done = b
-			case 4:
-				if idx == -1 {
-					task.Priority = 0
-					continue
-				}
-				prio, err := strconv.ParseInt(row[idx], 10, 32)
-				if err != nil {
-					task.Priority = 0
-					continue
-				}
-				task.Priority = int(prio)
-			case 5:
-				if idx == -1 {
-					task.Favorite = false
-					continue
-				}
-				tf, err := strconv.ParseBool(row[idx])
-				if err != nil {
-					task.Favorite = false
-					continue
-				}
-				task.Favorite = tf
-			}
-		}
-		return task, nil
-	}
 }

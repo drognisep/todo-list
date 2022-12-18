@@ -8,3 +8,7 @@ type Task struct {
 	Priority    int    `json:"priority" boltholdIndex:"Priority"`
 	Favorite    bool   `json:"favorite" boltholdIndex:"Favorite"`
 }
+
+type exportModel struct {
+	Tasks []Task `json:"tasks"`
+}

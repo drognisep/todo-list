@@ -155,8 +155,16 @@ func TestBoltStorage_Import(t *testing.T) {
 	tstore, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	data := `NAME,ID,DONE,DESCRIPTION,FAVORITE,PRIORITY
-Test Task,1,false,With a description,true,3`
+	data := `{
+"tasks": [{
+	"name": "Test Task",
+	"id": 1,
+	"done": false,
+	"description": "With a description",
+	"favorite": true,
+	"priority": 3
+}]
+}`
 
 	temp, err := os.CreateTemp("", "import.csv")
 	assert.NoError(t, err)
@@ -186,8 +194,15 @@ func TestBoltStorage_Import_ID_not_found(t *testing.T) {
 	tstore, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	data := `NAME,IDABC,DONE,DESCRIPTION,FAVORITE,PRIORITY
-Test Task,1,false,With a description,true,3`
+	data := `{
+"tasks": [{
+	"name": "Test Task",
+	"done": false,
+	"description": "With a description",
+	"favorite": true,
+	"priority": 3
+}]
+}`
 
 	temp, err := os.CreateTemp("", "import.csv")
 	assert.NoError(t, err)
