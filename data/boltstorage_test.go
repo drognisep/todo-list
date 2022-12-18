@@ -2,8 +2,10 @@ package data
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"testing"
 )
 
@@ -115,6 +117,38 @@ func TestBoltStorage_Get_WithID(t *testing.T) {
 	assert.Equal(t, uint64(1), tasks[0].ID)
 }
 
+func TestBoltStorage_Export(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	newTask := Task{
+		Name: "Some name",
+	}
+
+	created, err := tstore.Create(newTask)
+	assert.NoError(t, err)
+
+	temp, err := os.MkdirTemp("", "export_*")
+	assert.NoError(t, err)
+
+	snapshot, err := tstore.Export(temp)
+	require.NoError(t, err)
+
+	assert.NoError(t, tstore.Delete(created.ID))
+	count, err := tstore.Count()
+	assert.NoError(t, err)
+	assert.Equal(t, 0, count)
+
+	require.NoError(t, tstore.Import(snapshot, MergeError))
+	count, err = tstore.Count()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, count)
+
+	found, err := tstore.Get(WithID(created.ID))
+	assert.NoError(t, err)
+	assert.Equal(t, created, found[0])
+}
+
 func _newBoltStore(t *testing.T) (*boltStorage, func()) {
 	temp, err := os.MkdirTemp("", t.Name()+"_*")
 	if err != nil {
@@ -128,6 +162,11 @@ func _newBoltStore(t *testing.T) (*boltStorage, func()) {
 		t.Fatal("Failed to open DB file", err)
 	}
 	return storage, func() {
+		if r := recover(); r != nil {
+			t.Log("Recovered panic", r)
+			t.Fail()
+			debug.PrintStack()
+		}
 		if err := storage.store.Close(); err != nil {
 			t.Log("Failed to close DB", err)
 			t.Fail()
