@@ -231,6 +231,11 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 			continue
 		}
 
+		// Check if the duple represents a different state.
+		if dupe == imported {
+			continue
+		}
+
 		// A duplicate was found, employ the MergeStrategy.
 		switch merge {
 		case MergeOverwrite:

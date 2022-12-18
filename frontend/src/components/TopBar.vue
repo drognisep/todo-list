@@ -7,19 +7,30 @@
       <RouterLink to="/allTasks" class="link">Tasks</RouterLink>
     </div>
     <div class="actions">
-      <span class="material-icons export" @click="exportModel" title="Export">publish</span>
-      <span class="material-icons import" title="Import">download</span>
+      <span class="material-icons export" @click="exportModel" title="Export">save_as</span>
+      <span class="material-icons import" @click="showImportDialog = true" title="Import">download</span>
     </div>
   </div>
+  <ImportDialog
+      v-show="showImportDialog"
+      @dialogClosed="closeImport"
+      @doImport="importModel"
+  />
 </template>
 
 <script>
 import {RouterLink} from 'vue-router';
 import {Import, Export} from "../wailsjs/go/main/TaskController.js";
+import ImportDialog from "./ImportDialog.vue";
 
 export default {
   name: "TopBar",
-  components: [RouterLink],
+  components: {RouterLink, ImportDialog},
+  data() {
+    return {
+      showImportDialog: false,
+    };
+  },
   methods: {
     exportModel() {
       showProgress("Exporting model...");
@@ -33,7 +44,23 @@ export default {
           .then(() => {
             closeProgress();
           })
-    }
+    },
+    importModel(data) {
+      showProgress("Importing snapshot...");
+      Import(data.strategy)
+          .then(() => {
+            confirmDialog("Import successful", "Click OK to reload the app", () => {
+              window.location.reload();
+            })
+          })
+          .catch(console.error)
+          .then(() => {
+            closeProgress();
+          })
+    },
+    closeImport() {
+      this.showImportDialog = false;
+    },
   },
 }
 </script>

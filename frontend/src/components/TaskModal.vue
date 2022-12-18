@@ -24,7 +24,7 @@
       <tr>
         <td></td>
         <td style="text-align: right">
-          <button @click="submit" :disabled="submitDisabled">Update</button>
+          <button @click="submit" :disabled="submitDisabled">{{$props.task ? 'Update' : 'Create'}}</button>
           <button class="secondary" @click="emitClosed">Cancel</button>
         </td>
       </tr>

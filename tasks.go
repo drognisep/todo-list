@@ -100,7 +100,7 @@ func (c *TaskController) Import(strategy string) error {
 		return err
 	}
 
-	file, err := runtime.OpenFileDialog(context.Background(), runtime.OpenDialogOptions{
+	file, err := runtime.OpenFileDialog(c.ctx, runtime.OpenDialogOptions{
 		DefaultDirectory: home,
 		Filters: []runtime.FileFilter{
 			{
