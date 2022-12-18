@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/timshannon/bolthold"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"os"
 	"todo-list/data"
 )
 
@@ -68,4 +71,50 @@ func (c *TaskController) DeleteTask(id uint64) error {
 		return err
 	}
 	return nil
+}
+
+func (c *TaskController) Export() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	dir, err := runtime.OpenDirectoryDialog(context.Background(), runtime.OpenDialogOptions{
+		DefaultDirectory:     home,
+		CanCreateDirectories: true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if len(dir) == 0 {
+		return "", nil
+	}
+
+	return c.store.Export(dir)
+}
+
+func (c *TaskController) Import(strategy string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	file, err := runtime.OpenFileDialog(context.Background(), runtime.OpenDialogOptions{
+		DefaultDirectory: home,
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "Snapshots",
+				Pattern:     "*.snapshot",
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(file) == 0 {
+		return nil
+	}
+
+	return c.store.Import(file, strategy)
 }

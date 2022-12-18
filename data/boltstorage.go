@@ -13,6 +13,7 @@ import (
 
 const (
 	boltDBFileName = ".tasklist.db"
+	exportPattern  = "taskstore_*.snapshot"
 )
 
 var _ TaskStorage = (*boltStorage)(nil)
@@ -158,7 +159,7 @@ func (b *boltStorage) Delete(id uint64) error {
 }
 
 func (b *boltStorage) Export(dir string) (outName string, err error) {
-	out, err := os.CreateTemp(dir, "taskstore_*.snapshot")
+	out, err := os.CreateTemp(dir, exportPattern)
 	if err != nil {
 		return "", err
 	}
