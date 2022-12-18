@@ -1,4 +1,4 @@
-export namespace main {
+export namespace data {
 	
 	export class Task {
 	    id: number;

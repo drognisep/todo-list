@@ -3,15 +3,17 @@
     <router-view></router-view>
   </div>
   <Confirm/>
+  <Progress/>
 </template>
 
 <script>
 import {RouterView} from 'vue-router';
 import Confirm from "./Confirm.vue";
+import Progress from "./Progress.vue";
 
 export default {
   name: "MainView",
-  components: {RouterView, Confirm},
+  components: {RouterView, Confirm, Progress},
 }
 </script>
 
