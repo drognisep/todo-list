@@ -18,11 +18,16 @@ export default {
   components: {Overlay},
   props: {
     "title": String,
+    "closeHandler": Function,
   },
   emits: ["dialogClose"],
   methods: {
     dialogClose() {
-      this.$emit("dialogClose")
+      if (this.$props.closeHandler) {
+        this.$props.closeHandler();
+      } else {
+        this.$emit("dialogClose")
+      }
     },
   },
 }

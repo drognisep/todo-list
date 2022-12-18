@@ -10,59 +10,25 @@
       <span class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
       <span class="material-icons delete" @click="$emit('taskDeleted', task.id)">delete</span>
     </div>
-    <modal
+    <TaskModal
         v-show="showUpdate"
-        :title="updateTitle"
-        @dialogClose="toggleShowUpdate"
-    >
-      <table class="modal-update" style="width: 100%">
-        <tr>
-          <td><label for="task-name">Name</label></td>
-          <td><input id="task-name" type="text" v-model="updateState.name"/></td>
-        </tr>
-        <tr>
-          <td><label for="task-desc">Description</label></td>
-          <td><textarea id="task-desc" v-model="updateState.description"/></td>
-        </tr>
-        <tr>
-          <td><label for="task-priority">Priority</label></td>
-          <td>
-            <select id="task-priority" v-model="updateState.priority">
-              <option v-for="(name, idx) in priorityOptions" :value="5 - idx">{{name}}</option>
-            </select>
-            <span style="margin-left:16px;" v-text="priorityDescriptions[5 - updateState.priority]"></span>
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td style="text-align: right">
-            <button @click="submitUpdate" :disabled="updateDisabled">Update</button>
-            <button class="secondary" @click="toggleShowUpdate">Cancel</button>
-          </td>
-        </tr>
-      </table>
-    </modal>
+        :task="$props.task"
+        @dialogClosed="toggleShowUpdate"
+        @taskUpdated="submitUpdate"
+    />
   </div>
 </template>
 
 <script>
 import Modal from "./Modal.vue";
+import TaskModal from "./TaskModal.vue";
 
 const descLimit = 50;
 const nameLimit = 50;
-const priorityOpts = ['Critical', 'High', 'Medium', 'Low', 'Lowest', 'None'];
-const priorityDesc = [
-  'Immediate priority, should be done ASAP',
-  'Very important, should be done soon',
-  'Moderately important and urgent',
-  'Low importance and somewhat urgent',
-  'Low importance and not urgent',
-  'Routine, neither important nor urgent',
-];
 
 export default {
   name: "TaskRow",
-  components: {Modal},
+  components: {Modal, TaskModal},
   emits: ["taskDone", "taskDeleted", "taskUpdate"],
   props: {
     task: Object,
@@ -71,13 +37,6 @@ export default {
     return {
       showDone: this.$props.task.done,
       showUpdate: false,
-      updateState: {
-        id: Number(this.$props.task.id),
-        name: String(this.$props.task.name),
-        description: String(this.$props.task.description),
-        done: Boolean(this.$props.task.done),
-        priority: Number(this.$props.task.priority),
-      },
     }
   },
   methods: {
@@ -98,9 +57,8 @@ export default {
       this.revertUpdateState();
       this.showUpdate = !this.showUpdate;
     },
-    submitUpdate() {
-      this.$emit("taskUpdate", this.updateState);
-      this.toggleShowUpdate();
+    submitUpdate(state) {
+      this.$emit("taskUpdate", state);
     }
   },
   computed: {
@@ -122,17 +80,11 @@ export default {
       }
       return this.$props.task.description;
     },
-    updateTitle() {
-      return "Update task #" + this.$props.task.id;
-    },
     checkLigature() {
       if (this.showDone) {
         return "remove_done";
       }
       return "check";
-    },
-    updateDisabled() {
-      return this.updateState.name === '';
     },
     priorityClass() {
       switch (this.$props.task.priority) {
@@ -168,12 +120,6 @@ export default {
           return "";
       }
     },
-    priorityOptions() {
-      return priorityOpts;
-    },
-    priorityDescriptions() {
-      return priorityDesc
-    }
   }
 }
 </script>
@@ -202,7 +148,7 @@ export default {
   text-align: right;
 }
 
-.row > *:nth-child(2):hover {
+.row > *:nth-child(2) p:hover {
   color: var(--fg-highlight);
   cursor: pointer;
   text-decoration: underline;
@@ -222,7 +168,7 @@ export default {
   border-right: none;
 }
 
-.row .material-icons {
+.row .material-icons:not(*.priority) {
   cursor: pointer;
 }
 
@@ -257,23 +203,6 @@ export default {
 
 .row.done .material-icons {
   color: gray;
-}
-
-.modal-update {
-  font-size: 1.2em;
-}
-
-.modal-update input[type="text"], .modal-update textarea {
-  width: 100%;
-  font-size: 1.2em;
-}
-
-.modal-update textarea {
-  min-height: 150px;
-}
-
-.modal-update tr > td:first-child {
-  width: 100px;
 }
 
 div.name-cell {
