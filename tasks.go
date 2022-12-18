@@ -1,51 +1,35 @@
 package main
 
 import (
-	"github.com/timshannon/bolthold"
+	"todo-list/data"
 )
 
-type TaskFilter = func(query *bolthold.Query)
-
-func WithID(id uint64) TaskFilter {
-	return func(query *bolthold.Query) {
-		query.And(bolthold.Key).Eq(id)
-	}
-}
-
-type TaskStorage interface {
-	Get(...TaskFilter) ([]Task, error)
-	Count() (int, error)
-	Create(Task) (Task, error)
-	Update(uint64, Task) (Task, error)
-	Delete(uint64) error
-}
-
 type TaskController struct {
-	store TaskStorage
+	store data.TaskStorage
 }
 
 func NewTaskController() (*TaskController, error) {
-	storage, err := newBoltStorage()
+	store, err := data.NewStorage()
 	if err != nil {
 		return nil, err
 	}
 	return &TaskController{
-		store: storage,
+		store: store,
 	}, nil
 }
 
-func (c *TaskController) GetTaskByID(id uint64) (Task, error) {
-	tasks, err := c.store.Get(WithID(id))
+func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
+	tasks, err := c.store.Get(data.WithID(id))
 	if err != nil {
-		return zeroTask, err
+		return data.ZeroTask, err
 	}
 	if len(tasks) != 1 {
-		return zeroTask, ErrAmbiguousID
+		return data.ZeroTask, data.ErrAmbiguousID
 	}
 	return tasks[0], nil
 }
 
-func (c *TaskController) GetAllTasks() ([]Task, error) {
+func (c *TaskController) GetAllTasks() ([]data.Task, error) {
 	tasks, err := c.store.Get()
 	if err != nil {
 		return nil, err
@@ -57,18 +41,18 @@ func (c *TaskController) Count() (int, error) {
 	return c.store.Count()
 }
 
-func (c *TaskController) CreateTask(task Task) (Task, error) {
+func (c *TaskController) CreateTask(task data.Task) (data.Task, error) {
 	created, err := c.store.Create(task)
 	if err != nil {
-		return zeroTask, err
+		return data.ZeroTask, err
 	}
 	return created, nil
 }
 
-func (c *TaskController) UpdateTask(id uint64, task Task) (Task, error) {
+func (c *TaskController) UpdateTask(id uint64, task data.Task) (data.Task, error) {
 	updated, err := c.store.Update(id, task)
 	if err != nil {
-		return zeroTask, err
+		return data.ZeroTask, err
 	}
 	return updated, nil
 }

@@ -1,4 +1,4 @@
-package main
+package data
 
 type Task struct {
 	ID          uint64 `json:"id" boltholdKey:"ID"`

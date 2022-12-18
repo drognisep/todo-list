@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"errors"
@@ -16,7 +16,7 @@ const (
 var (
 	ErrIDNotFound  = errors.New("specified ID not found")
 	ErrAmbiguousID = errors.New("ambiguous ID detected")
-	zeroTask       = Task{}
+	ZeroTask       = Task{}
 )
 
 var _ TaskStorage = (*boltStorage)(nil)
@@ -127,7 +127,7 @@ func (b *boltStorage) Create(task Task) (Task, error) {
 		return nil
 	})
 	if err != nil {
-		return zeroTask, nil
+		return ZeroTask, nil
 	}
 	return task, nil
 }
@@ -140,7 +140,7 @@ func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
 		return nil
 	})
 	if err != nil {
-		return zeroTask, nil
+		return ZeroTask, nil
 	}
 	return task, nil
 }
