@@ -3,9 +3,11 @@ package data
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"testing"
 )
 
@@ -147,6 +149,59 @@ func TestBoltStorage_Export(t *testing.T) {
 	found, err := tstore.Get(WithID(created.ID))
 	assert.NoError(t, err)
 	assert.Equal(t, created, found[0])
+}
+
+func TestBoltStorage_Import(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	data := `NAME,ID,DONE,DESCRIPTION,FAVORITE,PRIORITY
+Test Task,1,false,With a description,true,3`
+
+	temp, err := os.CreateTemp("", "import.csv")
+	assert.NoError(t, err)
+	defer func() {
+		_ = temp.Close()
+		assert.NoError(t, os.Remove(temp.Name()))
+	}()
+
+	_, err = io.Copy(temp, strings.NewReader(data))
+	assert.NoError(t, err)
+
+	require.NoError(t, tstore.Import(temp.Name(), MergeError))
+
+	found, err := tstore.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, Task{
+		ID:          1,
+		Name:        "Test Task",
+		Description: "With a description",
+		Done:        false,
+		Favorite:    true,
+		Priority:    3,
+	}, found[0])
+}
+
+func TestBoltStorage_Import_ID_not_found(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	data := `NAME,IDABC,DONE,DESCRIPTION,FAVORITE,PRIORITY
+Test Task,1,false,With a description,true,3`
+
+	temp, err := os.CreateTemp("", "import.csv")
+	assert.NoError(t, err)
+	defer func() {
+		_ = temp.Close()
+		assert.NoError(t, os.Remove(temp.Name()))
+	}()
+
+	_, err = io.Copy(temp, strings.NewReader(data))
+	assert.NoError(t, err)
+
+	err = tstore.Import(temp.Name(), MergeError)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrUnmappedReqdImportField)
 }
 
 func _newBoltStore(t *testing.T) (*boltStorage, func()) {

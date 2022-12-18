@@ -17,12 +17,6 @@ const (
 	boltDBFileName = ".tasklist.db"
 )
 
-var (
-	ErrIDNotFound  = errors.New("specified ID not found")
-	ErrAmbiguousID = errors.New("ambiguous ID detected")
-	ZeroTask       = Task{}
-)
-
 var _ TaskStorage = (*boltStorage)(nil)
 
 type boltStorage struct {
@@ -245,7 +239,10 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 			return rollback(err)
 		}
 		var imported Task
-		imported = fn(imported, row)
+		imported, err = fn(imported, row)
+		if err != nil {
+			return rollback(err)
+		}
 
 		var dupe Task
 		err = b.store.TxFindOne(tx, &dupe, bolthold.Where(bolthold.Key).Eq(imported.ID))
@@ -290,7 +287,7 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 	return nil
 }
 
-type mapFunc func(task Task, row []string) Task
+type mapFunc func(task Task, row []string) (Task, error)
 
 func (b *boltStorage) mapInput(header []string) mapFunc {
 	inputIdx := [6]int{-1, -1, -1, -1, -1, -1}
@@ -304,24 +301,24 @@ func (b *boltStorage) mapInput(header []string) mapFunc {
 		}
 	}
 
-	return func(task Task, row []string) Task {
+	return func(task Task, row []string) (Task, error) {
 		for i, idx := range inputIdx {
 			switch i {
 			case 0:
 				if idx == -1 {
-					task.ID = 0
-					continue
+					return ZeroTask, fmt.Errorf("%w: %s", ErrUnmappedReqdImportField, "missing ID field")
 				}
 				id, err := strconv.ParseUint(row[idx], 10, 64)
 				if err != nil {
-					task.ID = 0
-					continue
+					return ZeroTask, fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, err)
 				}
 				task.ID = id
 			case 1:
 				if idx == -1 {
-					task.Name = "<Unset>"
-					continue
+					return ZeroTask, fmt.Errorf("%w: %s", ErrUnmappedReqdImportField, "missing name field")
+				}
+				if len(row[idx]) == 0 {
+					return ZeroTask, fmt.Errorf("%w: %s", ErrUnmappedReqdImportField, "empty name field")
 				}
 				task.Name = row[idx]
 			case 2:
@@ -365,6 +362,6 @@ func (b *boltStorage) mapInput(header []string) mapFunc {
 				task.Favorite = tf
 			}
 		}
-		return task
+		return task, nil
 	}
 }

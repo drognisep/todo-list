@@ -1,6 +1,16 @@
 package data
 
-import "github.com/timshannon/bolthold"
+import (
+	"errors"
+	"github.com/timshannon/bolthold"
+)
+
+var (
+	ErrIDNotFound              = errors.New("specified ID not found")
+	ErrAmbiguousID             = errors.New("ambiguous ID detected")
+	ErrUnmappedReqdImportField = errors.New("unable to map required import column")
+	ZeroTask                   = Task{}
+)
 
 type TaskFilter = func(query *bolthold.Query)
 
