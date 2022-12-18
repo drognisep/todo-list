@@ -17,12 +17,6 @@ func (t *Task) Copy() Task {
 		Name:        t.Name,
 		Description: t.Description,
 		Done:        t.Done,
+		Priority:    t.Priority,
 	}
-}
-
-func (t *Task) Map(updates *Task) {
-	if updates == nil {
-		return
-	}
-
 }

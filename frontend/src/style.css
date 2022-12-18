@@ -108,3 +108,9 @@ textarea {
 label {
     margin: 8px;
 }
+
+select {
+    background-color: var(--bg-color-light);
+    color: var(--fg-color);
+    font-size: 1.1em;
+}

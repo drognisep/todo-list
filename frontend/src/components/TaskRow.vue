@@ -1,7 +1,10 @@
 <template>
   <div :class="['row', rowClasses]">
     <p>{{ $props.task.id }}</p>
-    <p @click="toggleShowUpdate">{{ truncatedName }}</p>
+    <div class="name-cell">
+      <p @click="toggleShowUpdate">{{ truncatedName }}</p>
+      <span :class="['material-icons', 'priority', priorityClass]">{{ priorityIcon }}</span>
+    </div>
     <p>{{ truncatedDesc }}</p>
     <div class="actions">
       <span class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
@@ -22,6 +25,15 @@
           <td><textarea id="task-desc" v-model="updateState.description"/></td>
         </tr>
         <tr>
+          <td><label for="task-priority">Priority</label></td>
+          <td>
+            <select id="task-priority" v-model="updateState.priority">
+              <option v-for="(name, idx) in priorityOptions" :value="5 - idx">{{name}}</option>
+            </select>
+            <span style="margin-left:16px;" v-text="priorityDescriptions[5 - updateState.priority]"></span>
+          </td>
+        </tr>
+        <tr>
           <td></td>
           <td style="text-align: right">
             <button @click="submitUpdate" :disabled="updateDisabled">Update</button>
@@ -38,6 +50,15 @@ import Modal from "./Modal.vue";
 
 const descLimit = 50;
 const nameLimit = 50;
+const priorityOpts = ['Critical', 'High', 'Medium', 'Low', 'Lowest', 'None'];
+const priorityDesc = [
+  'Immediate priority, should be done ASAP',
+  'Very important, should be done soon',
+  'Moderately important and urgent',
+  'Low importance and somewhat urgent',
+  'Low importance and not urgent',
+  'Routine, neither important nor urgent',
+];
 
 export default {
   name: "TaskRow",
@@ -55,7 +76,8 @@ export default {
         name: String(this.$props.task.name),
         description: String(this.$props.task.description),
         done: Boolean(this.$props.task.done),
-      }
+        priority: Number(this.$props.task.priority),
+      },
     }
   },
   methods: {
@@ -69,6 +91,7 @@ export default {
         name: String(this.$props.task.name),
         description: String(this.$props.task.description),
         done: Boolean(this.$props.task.done),
+        priority: Number(this.$props.task.priority),
       }
     },
     toggleShowUpdate() {
@@ -110,6 +133,46 @@ export default {
     },
     updateDisabled() {
       return this.updateState.name === '';
+    },
+    priorityClass() {
+      switch (this.$props.task.priority) {
+        case 5:
+          return "priority-highest";
+        case 4:
+          return "priority-high";
+        case 3:
+          return "priority-med";
+        case 2:
+          return "priority-low";
+        case 1:
+          return "priority-lowest";
+        case 0:
+        default:
+          return "priority-none";
+      }
+    },
+    priorityIcon() {
+      switch (this.$props.task.priority) {
+        case 5:
+          return "keyboard_double_arrow_up";
+        case 4:
+          return "keyboard_arrow_up";
+        case 3:
+          return "unfold_more";
+        case 2:
+          return "keyboard_arrow_down";
+        case 1:
+          return "keyboard_double_arrow_down";
+        case 0:
+        default:
+          return "";
+      }
+    },
+    priorityOptions() {
+      return priorityOpts;
+    },
+    priorityDescriptions() {
+      return priorityDesc
     }
   }
 }
@@ -211,5 +274,36 @@ export default {
 
 .modal-update tr > td:first-child {
   width: 100px;
+}
+
+div.name-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 1em;
+}
+
+.material-icons.priority.priority-highest {
+  color: var(--fg-danger);
+}
+
+.material-icons.priority.priority-high {
+  color: var(--fg-warn);
+}
+
+.material-icons.priority.priority-med {
+  color: yellow;
+}
+
+.material-icons.priority.priority-low {
+  color: var(--fg-happy);
+}
+
+.material-icons.priority.priority-lowest {
+  color: #2b2bff;
+}
+
+.row.done .material-icons.priority {
+  color: gray;
 }
 </style>
