@@ -8,6 +8,7 @@
     <p>{{ truncatedDesc }}</p>
     <div class="actions">
       <span class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
+      <span :class="['material-icons','favorite',$props.task.favorite ? 'favored' : '']" @click="taskFavorite">push_pin</span>
       <span class="material-icons delete" @click="$emit('taskDeleted', task.id)">delete</span>
     </div>
     <TaskModal
@@ -43,6 +44,11 @@ export default {
     taskDone() {
       this.showDone = !this.showDone;
       this.$emit('taskDone', this.$props.task.id);
+    },
+    taskFavorite() {
+      let data = this.$props.task;
+      data.favorite = !data.favorite;
+      this.submitUpdate(data);
     },
     revertUpdateState() {
       this.updateState = {
@@ -184,6 +190,14 @@ export default {
   color: var(--fg-warn);
 }
 
+.row .favorite.favored {
+  color: var(--fg-blue);
+}
+
+.row .favorite:hover {
+  color: var(--fg-blue);
+}
+
 .row:nth-child(even) {
   background-color: var(--bg-color);
 }
@@ -212,6 +226,10 @@ div.name-cell {
   height: 1em;
 }
 
+.material-icons {
+  text-shadow: 0 0 3px black;
+}
+
 .material-icons.priority.priority-highest {
   color: var(--fg-danger);
 }
@@ -229,7 +247,7 @@ div.name-cell {
 }
 
 .material-icons.priority.priority-lowest {
-  color: #2b2bff;
+  color: var(--fg-blue);
 }
 
 .row.done .material-icons.priority {

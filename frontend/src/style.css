@@ -16,6 +16,7 @@
     --fg-danger: red;
     --fg-happy: #00c700;
     --fg-warn: #e89c0f;
+    --fg-blue: #3e3eff;
     --overlay-color: #2f2f2fE6;
     --border-light: 2px solid var(--overlay-color);
     --border-dark: 2px solid #181818;
