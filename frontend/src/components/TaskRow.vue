@@ -9,7 +9,7 @@
     <div class="actions">
       <span class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
       <span :class="['material-icons','favorite',$props.task.favorite ? 'favored' : '']" @click="taskFavorite">push_pin</span>
-      <span class="material-icons delete" @click="$emit('taskDeleted', task.id)">delete</span>
+      <span class="material-icons delete" @click="deleteTask">delete</span>
     </div>
     <TaskModal
         v-show="showUpdate"
@@ -58,6 +58,15 @@ export default {
     },
     submitUpdate(state) {
       this.$emit("taskUpdate", state);
+    },
+    deleteTask() {
+      if (!this.$props.task.done) {
+        confirmDialog('Are you sure?', 'This task is not completed and will be permanently deleted. Click OK to continue.', () => {
+          this.$emit('taskDeleted', this.$props.task.id);
+        })
+        return;
+      }
+      this.$emit('taskDeleted', this.$props.task.id);
     }
   },
   computed: {
