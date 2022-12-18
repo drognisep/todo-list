@@ -1,6 +1,9 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"github.com/timshannon/bolthold"
 	"todo-list/data"
 )
 
@@ -21,6 +24,9 @@ func NewTaskController() (*TaskController, error) {
 func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
 	tasks, err := c.store.Get(data.WithID(id))
 	if err != nil {
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return data.ZeroTask, fmt.Errorf("%w: %v", data.ErrIDNotFound, err)
+		}
 		return data.ZeroTask, err
 	}
 	if len(tasks) != 1 {

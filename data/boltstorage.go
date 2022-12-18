@@ -125,7 +125,7 @@ func (b *boltStorage) Create(task Task) (Task, error) {
 		return nil
 	})
 	if err != nil {
-		return ZeroTask, nil
+		return ZeroTask, err
 	}
 	return task, nil
 }
@@ -138,7 +138,10 @@ func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
 		return nil
 	})
 	if err != nil {
-		return ZeroTask, nil
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return ZeroTask, fmt.Errorf("%w: %v", ErrIDNotFound, err)
+		}
+		return ZeroTask, err
 	}
 	return task, nil
 }
@@ -148,6 +151,9 @@ func (b *boltStorage) Delete(id uint64) error {
 		return b.store.TxDelete(tx, id, new(Task))
 	})
 	if err != nil {
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
 	return nil
