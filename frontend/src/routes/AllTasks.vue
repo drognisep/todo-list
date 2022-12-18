@@ -23,22 +23,24 @@
       />
     </div>
   </div>
-  <modal v-show="newTasksShown" @dialogClose="toggleNewTasks" title="Create Task">
-    <CreateTask @clickedCancel="toggleNewTasks" @taskCreated="taskCreated"></CreateTask>
-  </modal>
+  <TaskModal
+      v-show="newTasksShown"
+      @dialogClosed="toggleNewTasks"
+      @taskCreated="taskCreated"
+  />
 </template>
 
 <script>
 import loadState from "../loadState.js";
 import Loading from "../components/Loading.vue";
-import {DeleteTask, GetAllTasks, UpdateTask} from "../wailsjs/go/main/TaskController.js";
+import {CreateTask, DeleteTask, GetAllTasks, UpdateTask} from "../wailsjs/go/main/TaskController.js";
 import Modal from "../components/Modal.vue";
-import CreateTask from "../components/CreateTask.vue";
 import TaskRow from "../components/TaskRow.vue";
+import TaskModal from "../components/TaskModal.vue";
 
 export default {
   name: "AllTasks",
-  components: {Loading, Modal, CreateTask, TaskRow},
+  components: {Loading, Modal, TaskModal, TaskRow},
   mixins: [loadState],
   data() {
     return {
@@ -57,9 +59,12 @@ export default {
     toggleNewTasks() {
       this.newTasksShown = !this.newTasksShown
     },
-    taskCreated() {
-      this.newTasksShown = false;
-      this.getTasks();
+    taskCreated(newTask) {
+      CreateTask(newTask)
+          .then(() => {
+            this.getTasks();
+          })
+          .catch(console.error)
     },
     toggleTaskDone(id) {
       this.tasks.forEach((item, i) => {
