@@ -14,9 +14,9 @@ import (
 var assets embed.FS
 
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
 	tasks, err := NewTaskController()
+	// Create an instance of the app structure
+	app := NewApp(tasks)
 	if err != nil {
 		fmt.Printf("Failed to start task controller: %v\n", err)
 		os.Exit(1)

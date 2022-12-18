@@ -7,7 +7,7 @@
       <RouterLink to="/allTasks" class="link">Tasks</RouterLink>
     </div>
     <div class="actions">
-      <span class="material-icons export" title="Export">publish</span>
+      <span class="material-icons export" @click="exportModel" title="Export">publish</span>
       <span class="material-icons import" title="Import">download</span>
     </div>
   </div>
@@ -15,10 +15,26 @@
 
 <script>
 import {RouterLink} from 'vue-router';
+import {Import, Export} from "../wailsjs/go/main/TaskController.js";
 
 export default {
   name: "TopBar",
   components: [RouterLink],
+  methods: {
+    exportModel() {
+      showProgress("Exporting model...");
+      Export()
+          .then(snapshotFile => {
+            if (snapshotFile !== "") {
+              confirmDialog("Export complete!", `Your data has been exported to ${snapshotFile}`, () => {});
+            }
+          })
+          .catch(console.error)
+          .then(() => {
+            closeProgress();
+          })
+    }
+  },
 }
 </script>
 

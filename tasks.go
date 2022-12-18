@@ -11,6 +11,7 @@ import (
 )
 
 type TaskController struct {
+	ctx   context.Context
 	store data.TaskStorage
 }
 
@@ -78,7 +79,7 @@ func (c *TaskController) Export() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dir, err := runtime.OpenDirectoryDialog(context.Background(), runtime.OpenDialogOptions{
+	dir, err := runtime.OpenDirectoryDialog(c.ctx, runtime.OpenDialogOptions{
 		DefaultDirectory:     home,
 		CanCreateDirectories: true,
 	})

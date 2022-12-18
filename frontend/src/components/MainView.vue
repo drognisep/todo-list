@@ -2,8 +2,8 @@
   <div id="main-view">
     <router-view></router-view>
   </div>
-  <Confirm/>
   <Progress/>
+  <Confirm/>
 </template>
 
 <script>
