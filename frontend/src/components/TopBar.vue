@@ -4,7 +4,6 @@
     <h3 id="brand-text">Tasks</h3>
     <RouterLink to="/" class="link">Dashboard</RouterLink>
     <RouterLink to="/allTasks" class="link">Tasks</RouterLink>
-    <RouterLink to="/searchTasks" class="link">Search</RouterLink>
   </div>
 </template>
 
