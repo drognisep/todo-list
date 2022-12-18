@@ -63,6 +63,10 @@ func (t *taskSorter) Less(i, j int) bool {
 		return true
 	case a.Done && !b.Done:
 		return false
+	case a.Favorite && !b.Favorite:
+		return true
+	case !a.Favorite && b.Favorite:
+		return false
 	case a.Priority > b.Priority:
 		return true
 	case a.Priority < b.Priority:

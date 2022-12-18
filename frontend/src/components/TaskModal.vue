@@ -60,6 +60,7 @@ export default {
         description: this.$props.task ? this.$props.task.description : '',
         done: this.$props.task ? this.$props.task.done : false,
         priority: this.$props.task ? this.$props.task.priority : 0,
+        favorite: this.$props.task ? this.$props.task.favorite : false,
       }
     }
   },
@@ -71,6 +72,7 @@ export default {
         description: this.$props.task ? this.$props.task.description : '',
         done: this.$props.task ? this.$props.task.done : false,
         priority: this.$props.task ? this.$props.task.priority : 0,
+        favorite: this.$props.task ? this.$props.task.favorite : false,
       };
     },
     emitClosed() {

@@ -6,6 +6,7 @@ export namespace main {
 	    description: string;
 	    done: boolean;
 	    priority: number;
+	    favorite: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Task(source);
@@ -18,6 +19,7 @@ export namespace main {
 	        this.description = source["description"];
 	        this.done = source["done"];
 	        this.priority = source["priority"];
+	        this.favorite = source["favorite"];
 	    }
 	}
 
