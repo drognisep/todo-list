@@ -23,8 +23,8 @@ type LogEvent struct {
 }
 
 type EventLog struct {
-	ctx          context.Context
-	DebugEnabled bool `json:"debugEnabled"`
+	Ctx          context.Context `json:"-"`
+	DebugEnabled bool            `json:"debugEnabled"`
 }
 
 func (l *EventLog) InfoEvent(message string, args ...any) {
@@ -53,7 +53,7 @@ func (l *EventLog) levelLog(level, message string, args ...any) {
 			Message: message,
 			Values:  values,
 		}
-		runtime.EventsEmit(l.ctx, LogEventName, &event)
+		runtime.EventsEmit(l.Ctx, LogEventName, &event)
 	}
 }
 
@@ -69,10 +69,6 @@ func (l *EventLog) assembleArgs(args ...any) map[string]any {
 	}
 
 	return values
-}
-
-func (l *EventLog) SetContext(ctx context.Context) {
-	l.ctx = ctx
 }
 
 func (l *EventLog) LogEventName() string {

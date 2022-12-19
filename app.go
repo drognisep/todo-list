@@ -29,7 +29,7 @@ func NewApp(logger *eventlog.EventLog, tasks *TaskController) *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.tasks.ctx = ctx
-	a.logger.SetContext(ctx)
+	a.logger.Ctx = ctx
 
 	valueFormatter := func(values map[string]any) string {
 		var buf strings.Builder

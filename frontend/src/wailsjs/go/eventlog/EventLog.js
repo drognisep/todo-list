@@ -18,10 +18,6 @@ export function LogEventName() {
   return window['go']['eventlog']['EventLog']['LogEventName']();
 }
 
-export function SetContext(arg1) {
-  return window['go']['eventlog']['EventLog']['SetContext'](arg1);
-}
-
 export function WarnEvent(arg1, arg2) {
   return window['go']['eventlog']['EventLog']['WarnEvent'](arg1, arg2);
 }
