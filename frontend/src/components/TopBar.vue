@@ -1,18 +1,67 @@
 <template>
   <div id="topbar">
-    <img alt="tasks" id="brand-img" src="../assets/images/gear.svg"/>
-    <h3 id="brand-text">Tasks</h3>
-    <RouterLink to="/" class="link">Dashboard</RouterLink>
-    <RouterLink to="/allTasks" class="link">Tasks</RouterLink>
+    <div class="nav">
+      <img alt="tasks" id="brand-img" src="../assets/images/gear.svg"/>
+      <h3 id="brand-text">Tasks</h3>
+      <RouterLink to="/" class="link">Dashboard</RouterLink>
+      <RouterLink to="/allTasks" class="link">Tasks</RouterLink>
+    </div>
+    <div class="actions">
+      <span class="material-icons export" @click="exportModel" title="Export">save_as</span>
+      <span class="material-icons import" @click="showImportDialog = true" title="Import">download</span>
+    </div>
   </div>
+  <ImportDialog
+      v-show="showImportDialog"
+      @dialogClosed="closeImport"
+      @doImport="importModel"
+  />
 </template>
 
 <script>
 import {RouterLink} from 'vue-router';
+import {Import, Export} from "../wailsjs/go/main/TaskController.js";
+import ImportDialog from "./ImportDialog.vue";
 
 export default {
   name: "TopBar",
-  components: [RouterLink],
+  components: {RouterLink, ImportDialog},
+  data() {
+    return {
+      showImportDialog: false,
+    };
+  },
+  methods: {
+    exportModel() {
+      showProgress("Exporting model...");
+      Export()
+          .then(snapshotFile => {
+            if (snapshotFile !== "") {
+              confirmDialog("Export complete!", `Your data has been exported to ${snapshotFile}`, () => {});
+            }
+          })
+          .catch(console.errorEvent)
+          .then(() => {
+            closeProgress();
+          })
+    },
+    importModel(data) {
+      showProgress("Importing snapshot...");
+      Import(data.strategy)
+          .then(() => {
+            confirmDialog("Import successful", "Click OK to reload the app", () => {
+              window.location.reload();
+            })
+          })
+          .catch(console.errorEvent)
+          .then(() => {
+            closeProgress();
+          })
+    },
+    closeImport() {
+      this.showImportDialog = false;
+    },
+  },
 }
 </script>
 
@@ -24,15 +73,23 @@ export default {
   right: 0;
   height: var(--toolbar-height);
   background-color: var(--bg-color-light);
-  box-shadow: black 0 0 5px;
-  padding: 0 0 0 16px;
+  box-shadow: 0 0 5px black;
+  padding: 0 16px;
   z-index: var(--z-toolbar);
 
-  --text-shadow: black 0 0 8px;
+  display: flex;
+  justify-content: space-between;
+
+  --text-shadow: 0 0 8px black;
   --border-right: 2px solid var(--overlay-color);
 }
 
-#topbar > * {
+#topbar > .nav {
+  display: flex;
+  height: 100%;
+}
+
+.nav > * {
   display: inline-block;
   max-height: var(--toolbar-height);
   line-height: var(--toolbar-height);
@@ -40,13 +97,13 @@ export default {
   padding: 0;
 }
 
-#topbar > #brand-img {
+.nav > #brand-img {
   height: calc(var(--toolbar-height) - 12px);
   margin: 6px 16px 0 0;
   float: left;
 }
 
-#topbar > #brand-text {
+.nav > #brand-text {
   font-weight: bold;
   height: var(--toolbar-height);
   line-height: var(--toolbar-height);
@@ -56,11 +113,10 @@ export default {
   border-right: var(--border-right);
 }
 
-#topbar > .link {
+.nav > .link {
   color: var(--fg-color);
   text-decoration: none;
   position: relative;
-  top: -2px;
   padding: 0 8px;
   margin: 0;
   cursor: pointer;
@@ -68,9 +124,29 @@ export default {
   border-right: var(--border-right);
 }
 
-#topbar > .link:hover, #topbar > .link.router-link-active {
+.nav > .link:hover, .nav > .link.router-link-active {
   text-shadow: var(--text-shadow);
   color: var(--fg-highlight);
+  background-color: var(--bg-highlight);
+}
+
+div.actions {
+  text-align: right;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+}
+
+div.actions .export, div.actions .import {
+  cursor: pointer;
+  text-shadow: 0 1px 4px black;
+  font-size: 1.8em;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+div.actions .export:hover, div.actions .import:hover {
   background-color: var(--bg-highlight);
 }
 </style>

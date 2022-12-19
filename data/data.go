@@ -1,4 +1,4 @@
-package main
+package data
 
 type Task struct {
 	ID          uint64 `json:"id" boltholdKey:"ID"`
@@ -7,4 +7,8 @@ type Task struct {
 	Done        bool   `json:"done" boltholdIndex:"Done"`
 	Priority    int    `json:"priority" boltholdIndex:"Priority"`
 	Favorite    bool   `json:"favorite" boltholdIndex:"Favorite"`
+}
+
+type exportModel struct {
+	Tasks []Task `json:"tasks"`
 }

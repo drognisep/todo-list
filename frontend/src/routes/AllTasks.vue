@@ -53,7 +53,7 @@ export default {
           .then(tasks => {
             this.tasks = tasks;
           })
-          .catch(console.error)
+          .catch(console.errorEvent)
     },
     toggleNewTasks() {
       this.newTasksShown = !this.newTasksShown
@@ -63,7 +63,7 @@ export default {
           .then(() => {
             this.getTasks();
           })
-          .catch(console.error)
+          .catch(console.errorEvent)
     },
     taskUpdate(updated) {
       console.log("Received update");
@@ -72,11 +72,11 @@ export default {
           .then(() => {
             this.getTasks();
           })
-          .catch(console.error)
+          .catch(console.errorEvent)
     },
     deleteTask(id) {
       DeleteTask(id)
-          .catch(console.error)
+          .catch(console.errorEvent)
           .then(() => {
             this.getTasks();
           })
@@ -93,7 +93,7 @@ export default {
         .then(tasks => {
           this.tasks = tasks;
         })
-        .catch(console.error)
+        .catch(console.errorEvent)
         .then(() => {
           this.doneLoading();
         })

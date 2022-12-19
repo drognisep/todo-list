@@ -1,7 +1,9 @@
-package main
+package data
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/timshannon/bolthold"
 	"go.etcd.io/bbolt"
 	"os"
@@ -11,12 +13,7 @@ import (
 
 const (
 	boltDBFileName = ".tasklist.db"
-)
-
-var (
-	ErrIDNotFound  = errors.New("specified ID not found")
-	ErrAmbiguousID = errors.New("ambiguous ID detected")
-	zeroTask       = Task{}
+	exportPattern  = "taskstore_*.snapshot"
 )
 
 var _ TaskStorage = (*boltStorage)(nil)
@@ -127,7 +124,7 @@ func (b *boltStorage) Create(task Task) (Task, error) {
 		return nil
 	})
 	if err != nil {
-		return zeroTask, nil
+		return ZeroTask, err
 	}
 	return task, nil
 }
@@ -140,7 +137,10 @@ func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
 		return nil
 	})
 	if err != nil {
-		return zeroTask, nil
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return ZeroTask, fmt.Errorf("%w: %v", ErrIDNotFound, err)
+		}
+		return ZeroTask, err
 	}
 	return task, nil
 }
@@ -150,7 +150,117 @@ func (b *boltStorage) Delete(id uint64) error {
 		return b.store.TxDelete(tx, id, new(Task))
 	})
 	if err != nil {
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return nil
+		}
 		return err
+	}
+	return nil
+}
+
+func (b *boltStorage) Export(dir string) (outName string, err error) {
+	out, err := os.CreateTemp(dir, exportPattern)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = out.Close()
+	}()
+
+	outName = out.Name()
+
+	writer := json.NewEncoder(out)
+
+	tasks, err := b.Get()
+	if err != nil {
+		return
+	}
+	err = writer.Encode(exportModel{Tasks: tasks})
+	if err != nil {
+		return
+	}
+
+	return outName, nil
+}
+
+func (b *boltStorage) Import(file string, merge MergeStrategy) error {
+	in, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = in.Close()
+	}()
+
+	reader := json.NewDecoder(in)
+	var model exportModel
+	if err := reader.Decode(&model); err != nil {
+		return err
+	}
+
+	tx, err := b.store.Bolt().Begin(true)
+	if err != nil {
+		return err
+	}
+	rollback := func(err error) error {
+		if rerr := tx.Rollback(); rerr != nil {
+			return fmt.Errorf("%w: %v", err, rerr)
+		}
+		return err
+	}
+
+	for _, imported := range model.Tasks {
+		switch {
+		case imported.ID == 0:
+			return rollback(fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/unset ID field"))
+		case len(imported.Name) == 0:
+			return rollback(fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/empty name field"))
+		}
+
+		var dupe Task
+		err = b.store.TxFindOne(tx, &dupe, bolthold.Where(bolthold.Key).Eq(imported.ID))
+		if err != nil {
+			if err != bolthold.ErrNotFound {
+				return rollback(err)
+			}
+
+			// No dupe found, import it directly.
+			if err := b.store.TxInsert(tx, imported.ID, imported); err != nil {
+				return rollback(err)
+			}
+			continue
+		}
+
+		// Check if the duple represents a different state.
+		if dupe == imported {
+			continue
+		}
+
+		// A duplicate was found, employ the MergeStrategy.
+		switch merge {
+		case MergeOverwrite:
+			dupe.Name = imported.Name
+			dupe.Description = imported.Description
+			dupe.Done = imported.Done
+			dupe.Priority = imported.Priority
+			dupe.Favorite = imported.Favorite
+
+			err := b.store.TxUpdate(tx, dupe.ID, dupe)
+			if err != nil {
+				return rollback(err)
+			}
+			continue
+		case MergeKeepInternal:
+			continue
+		case MergeError:
+			return rollback(errors.New("conflict discovered, rolling back import"))
+		default:
+			return rollback(fmt.Errorf("unrecognized merge strategy '%s'", merge))
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return rollback(err)
 	}
 	return nil
 }

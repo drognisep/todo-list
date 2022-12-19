@@ -1,51 +1,45 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"github.com/timshannon/bolthold"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"os"
+	"todo-list/data"
 )
 
-type TaskFilter = func(query *bolthold.Query)
-
-func WithID(id uint64) TaskFilter {
-	return func(query *bolthold.Query) {
-		query.And(bolthold.Key).Eq(id)
-	}
-}
-
-type TaskStorage interface {
-	Get(...TaskFilter) ([]Task, error)
-	Count() (int, error)
-	Create(Task) (Task, error)
-	Update(uint64, Task) (Task, error)
-	Delete(uint64) error
-}
-
 type TaskController struct {
-	store TaskStorage
+	ctx   context.Context
+	store data.TaskStorage
 }
 
 func NewTaskController() (*TaskController, error) {
-	storage, err := newBoltStorage()
+	store, err := data.NewStorage()
 	if err != nil {
 		return nil, err
 	}
 	return &TaskController{
-		store: storage,
+		store: store,
 	}, nil
 }
 
-func (c *TaskController) GetTaskByID(id uint64) (Task, error) {
-	tasks, err := c.store.Get(WithID(id))
+func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
+	tasks, err := c.store.Get(data.WithID(id))
 	if err != nil {
-		return zeroTask, err
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return data.ZeroTask, fmt.Errorf("%w: %v", data.ErrIDNotFound, err)
+		}
+		return data.ZeroTask, err
 	}
 	if len(tasks) != 1 {
-		return zeroTask, ErrAmbiguousID
+		return data.ZeroTask, data.ErrAmbiguousID
 	}
 	return tasks[0], nil
 }
 
-func (c *TaskController) GetAllTasks() ([]Task, error) {
+func (c *TaskController) GetAllTasks() ([]data.Task, error) {
 	tasks, err := c.store.Get()
 	if err != nil {
 		return nil, err
@@ -57,18 +51,18 @@ func (c *TaskController) Count() (int, error) {
 	return c.store.Count()
 }
 
-func (c *TaskController) CreateTask(task Task) (Task, error) {
+func (c *TaskController) CreateTask(task data.Task) (data.Task, error) {
 	created, err := c.store.Create(task)
 	if err != nil {
-		return zeroTask, err
+		return data.ZeroTask, err
 	}
 	return created, nil
 }
 
-func (c *TaskController) UpdateTask(id uint64, task Task) (Task, error) {
+func (c *TaskController) UpdateTask(id uint64, task data.Task) (data.Task, error) {
 	updated, err := c.store.Update(id, task)
 	if err != nil {
-		return zeroTask, err
+		return data.ZeroTask, err
 	}
 	return updated, nil
 }
@@ -78,4 +72,50 @@ func (c *TaskController) DeleteTask(id uint64) error {
 		return err
 	}
 	return nil
+}
+
+func (c *TaskController) Export() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	dir, err := runtime.OpenDirectoryDialog(c.ctx, runtime.OpenDialogOptions{
+		DefaultDirectory:     home,
+		CanCreateDirectories: true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if len(dir) == 0 {
+		return "", nil
+	}
+
+	return c.store.Export(dir)
+}
+
+func (c *TaskController) Import(strategy string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	file, err := runtime.OpenFileDialog(c.ctx, runtime.OpenDialogOptions{
+		DefaultDirectory: home,
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "Snapshots",
+				Pattern:     "*.snapshot",
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(file) == 0 {
+		return nil
+	}
+
+	return c.store.Import(file, strategy)
 }

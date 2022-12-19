@@ -7,9 +7,9 @@
     </div>
     <p>{{ truncatedDesc }}</p>
     <div class="actions">
-      <span class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
-      <span :class="['material-icons','favorite',$props.task.favorite ? 'favored' : '']" @click="taskFavorite">push_pin</span>
-      <span class="material-icons delete" @click="deleteTask">delete</span>
+      <span :title="$props.task.done ? 'Reopen' : 'Complete'" class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
+      <span title="Pin" :class="['material-icons','favorite',$props.task.favorite ? 'favored' : '']" @click="taskFavorite">push_pin</span>
+      <span title="Delete" class="material-icons delete" @click="deleteTask">delete</span>
     </div>
     <TaskModal
         v-show="showUpdate"
@@ -225,7 +225,7 @@ div.name-cell {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 1em;
+  height: 100%;
 }
 
 .material-icons {

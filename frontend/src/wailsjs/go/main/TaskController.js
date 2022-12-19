@@ -14,12 +14,20 @@ export function DeleteTask(arg1) {
   return window['go']['main']['TaskController']['DeleteTask'](arg1);
 }
 
+export function Export() {
+  return window['go']['main']['TaskController']['Export']();
+}
+
 export function GetAllTasks() {
   return window['go']['main']['TaskController']['GetAllTasks']();
 }
 
 export function GetTaskByID(arg1) {
   return window['go']['main']['TaskController']['GetTaskByID'](arg1);
+}
+
+export function Import(arg1) {
+  return window['go']['main']['TaskController']['Import'](arg1);
 }
 
 export function UpdateTask(arg1, arg2) {
