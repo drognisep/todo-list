@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"todo-list/eventlog"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -14,9 +15,10 @@ import (
 var assets embed.FS
 
 func main() {
+	logger := &eventlog.EventLog{}
 	tasks, err := NewTaskController()
 	// Create an instance of the app structure
-	app := NewApp(tasks)
+	app := NewApp(logger, tasks)
 	if err != nil {
 		fmt.Printf("Failed to start task controller: %v\n", err)
 		os.Exit(1)
@@ -34,6 +36,7 @@ func main() {
 		OnStartup:        app.startup,
 		Bind: []interface{}{
 			app,
+			logger,
 			tasks,
 		},
 	})

@@ -40,7 +40,7 @@ export default {
               confirmDialog("Export complete!", `Your data has been exported to ${snapshotFile}`, () => {});
             }
           })
-          .catch(console.error)
+          .catch(console.errorEvent)
           .then(() => {
             closeProgress();
           })
@@ -53,7 +53,7 @@ export default {
               window.location.reload();
             })
           })
-          .catch(console.error)
+          .catch(console.errorEvent)
           .then(() => {
             closeProgress();
           })
@@ -73,14 +73,14 @@ export default {
   right: 0;
   height: var(--toolbar-height);
   background-color: var(--bg-color-light);
-  box-shadow: black 0 0 5px;
+  box-shadow: 0 0 5px black;
   padding: 0 16px;
   z-index: var(--z-toolbar);
 
   display: flex;
   justify-content: space-between;
 
-  --text-shadow: black 0 0 8px;
+  --text-shadow: 0 0 8px black;
   --border-right: 2px solid var(--overlay-color);
 }
 
@@ -140,7 +140,7 @@ div.actions {
 
 div.actions .export, div.actions .import {
   cursor: pointer;
-  text-shadow: 0 0 4px black;
+  text-shadow: 0 1px 4px black;
   font-size: 1.8em;
   border-radius: 4px;
   padding: 4px;

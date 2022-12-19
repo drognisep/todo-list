@@ -32,7 +32,7 @@ export default {
             this.count = count;
           })
           .catch(err => {
-            console.error("Error loading task count: " + err);
+            console.errorEvent("Error loading task count: " + err);
           })
           .then(() => this.doneLoading());
     }

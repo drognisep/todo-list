@@ -23,7 +23,7 @@ export default {
   top: var(--toolbar-height);
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: var(--footer-height);
   overflow: hidden;
 }
 </style>

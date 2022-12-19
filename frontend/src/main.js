@@ -2,36 +2,18 @@ import {createApp} from 'vue'
 import {createRouter, createWebHashHistory} from 'vue-router';
 import routes from './routes.js'
 import App from './App.vue'
+import confirm from './confirm.js'
+import progress from "./progress.js";
+import logEvent from "./logEvent.js";
 
 const router = createRouter({
     history: createWebHashHistory(),
     routes,
 });
 
-window.confirmDialog = function (title, message, onConfirm) {
-    let evt = new CustomEvent('confirmDialog', {
-        detail: {
-            title, message, onConfirm
-        },
-    });
-
-    window.dispatchEvent(evt);
-};
-
-window.showProgress = function (message) {
-    let evt = new CustomEvent('showProgressDialog', {
-        detail: {
-            message,
-        }
-    })
-
-    window.dispatchEvent(evt);
-};
-
-window.closeProgress = function () {
-    let evt = new CustomEvent('closeProgressDialog')
-    window.dispatchEvent(evt);
-};
+confirm.setup();
+progress.setup();
+logEvent.setup();
 
 let app = createApp(App);
 app.use(router);
