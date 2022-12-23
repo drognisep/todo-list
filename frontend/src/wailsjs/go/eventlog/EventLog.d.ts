@@ -9,4 +9,6 @@ export function InfoEvent(arg1:string,arg2:Array<any>):Promise<void>;
 
 export function LogEventName():Promise<string>;
 
+export function SetDebug(arg1:boolean):Promise<void>;
+
 export function WarnEvent(arg1:string,arg2:Array<any>):Promise<void>;

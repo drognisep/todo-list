@@ -66,8 +66,6 @@ export default {
           .catch(console.errorEvent)
     },
     taskUpdate(updated) {
-      console.log("Received update");
-      console.log(updated);
       UpdateTask(updated.id, updated)
           .then(() => {
             this.getTasks();

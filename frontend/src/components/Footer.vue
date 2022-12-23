@@ -43,9 +43,11 @@ export default {
       switch (evt.level) {
         case "DEBUG":
           console.debug(`[DEBUG] ${this.formatMessage(evt)}`);
+          this.logs.push(evt);
           break;
         case "INFO":
           console.log(`[INFO] ${this.formatMessage(evt)}`);
+          this.logs.push(evt);
           break;
         case "WARN":
           let warning = `[WARN] ${this.formatMessage(evt)}`;

@@ -16,7 +16,7 @@
         <td><label for="task-priority">Priority</label></td>
         <td>
           <select id="task-priority" v-model="requestState.priority">
-            <option v-for="(name, idx) in priorityOptions" :value="5 - idx">{{name}}</option>
+            <option v-for="(name, idx) in priorityOptions" :value="5 - idx">{{ name }}</option>
           </select>
           <span style="margin-left:16px;" v-text="priorityDescriptions[5 - requestState.priority]"></span>
         </td>
@@ -24,7 +24,7 @@
       <tr>
         <td></td>
         <td style="text-align: right">
-          <button @click="submit" :disabled="submitDisabled">{{$props.task ? 'Update' : 'Create'}}</button>
+          <button @click="submit" :disabled="submitDisabled">{{ $props.task ? 'Update' : 'Create' }}</button>
           <button class="secondary" @click="emitClosed">Cancel</button>
         </td>
       </tr>
@@ -66,14 +66,12 @@ export default {
   },
   methods: {
     revertState() {
-      this.requestState = {
-        id: this.$props.task ? this.$props.task.id : 0,
-        name: this.$props.task ? this.$props.task.name : '',
-        description: this.$props.task ? this.$props.task.description : '',
-        done: this.$props.task ? this.$props.task.done : false,
-        priority: this.$props.task ? this.$props.task.priority : 0,
-        favorite: this.$props.task ? this.$props.task.favorite : false,
-      };
+      this.requestState.id = this.$props.task ? this.$props.task.id : 0;
+      this.requestState.name = this.$props.task ? this.$props.task.name : '';
+      this.requestState.description = this.$props.task ? this.$props.task.description : '';
+      this.requestState.done = this.$props.task ? this.$props.task.done : false;
+      this.requestState.priority = this.$props.task ? this.$props.task.priority : 0;
+      this.requestState.favorite = this.$props.task ? this.$props.task.favorite : false;
     },
     emitClosed() {
       this.revertState();
@@ -105,7 +103,12 @@ export default {
     submitDisabled() {
       return this.requestState.name.length === 0;
     },
-  }
+  },
+  watch: {
+    task() {
+      this.revertState();
+    },
+  },
 }
 </script>
 

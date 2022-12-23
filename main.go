@@ -16,7 +16,7 @@ var assets embed.FS
 
 func main() {
 	logger := &eventlog.EventLog{}
-	tasks, err := NewTaskController()
+	tasks, err := NewTaskController(logger)
 	// Create an instance of the app structure
 	app := NewApp(logger, tasks)
 	if err != nil {
