@@ -36,16 +36,14 @@ export default {
   },
   data() {
     return {
-      showDone: this.$props.task.done,
       showUpdate: false,
     }
   },
   methods: {
     taskDone() {
-      this.showDone = !this.showDone;
       let data = this.$props.task;
       data.favorite = false;
-      data.done = this.showDone;
+      data.done = !this.isDone;
       this.submitUpdate(data);
     },
     taskFavorite() {
@@ -70,8 +68,11 @@ export default {
     }
   },
   computed: {
+    isDone() {
+      return this.$props.task.done;
+    },
     rowClasses() {
-      if (this.showDone) {
+      if (this.isDone) {
         return "done"
       }
       return ""
@@ -89,7 +90,7 @@ export default {
       return this.$props.task.description;
     },
     checkLigature() {
-      if (this.showDone) {
+      if (this.isDone) {
         return "remove_done";
       }
       return "check";
@@ -128,7 +129,7 @@ export default {
           return "";
       }
     },
-  }
+  },
 }
 </script>
 

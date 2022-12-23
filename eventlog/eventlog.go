@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"strconv"
 	"time"
 )
 
@@ -27,26 +28,30 @@ type EventLog struct {
 	DebugEnabled bool            `json:"debugEnabled"`
 }
 
+func (l *EventLog) SetDebug(debug bool) {
+	l.DebugEnabled = debug
+}
+
 func (l *EventLog) InfoEvent(message string, args ...any) {
-	l.levelLog(linfo, message, args)
+	l.levelLog(linfo, message, args...)
 }
 
 func (l *EventLog) WarnEvent(message string, args ...any) {
-	l.levelLog(lwarn, message, args)
+	l.levelLog(lwarn, message, args...)
 }
 
 func (l *EventLog) ErrorEvent(message string, args ...any) {
-	l.levelLog(lerror, message, args)
+	l.levelLog(lerror, message, args...)
 }
 
 func (l *EventLog) DebugEvent(message string, args ...any) {
-	l.levelLog(ldebug, message, args)
+	l.levelLog(ldebug, message, args...)
 }
 
 func (l *EventLog) levelLog(level, message string, args ...any) {
 	if level != ldebug || (level == ldebug && l.DebugEnabled) {
 		now := time.Now()
-		values := l.assembleArgs(args)
+		values := l.assembleArgs(args...)
 		event := LogEvent{
 			Time:    now,
 			Level:   level,
@@ -58,17 +63,45 @@ func (l *EventLog) levelLog(level, message string, args ...any) {
 }
 
 func (l *EventLog) assembleArgs(args ...any) map[string]any {
-	values := map[string]any{}
-	for i := 0; (i + 1) < len(args); i += 2 {
-		if s, ok := args[i].(string); ok {
-			values[s] = args[i+1]
-		} else {
-			key := fmt.Sprintf("%v", args[i])
-			values[key] = args[i+1]
+	if len(args) == 1 {
+		if aa, ok := args[0].([]any); ok {
+			return l.assembleArgs(aa...)
 		}
 	}
 
+	values := map[string]any{}
+	for i := 0; (i + 1) < len(args); i += 2 {
+		k, v := coerceArgs(args[i], args[i+1])
+		values[k] = v
+	}
+
 	return values
+}
+
+func coerceArgs(a any, b any) (string, any) {
+	var (
+		key string
+		val = fmt.Sprintf("%v", b)
+	)
+
+	if a == nil {
+		return "<nil>", val
+	}
+
+	switch k := a.(type) {
+	case string:
+		key = k
+	case float64:
+		key = strconv.FormatFloat(k, 'f', -1, 64)
+	case int64:
+		key = strconv.FormatInt(k, 64)
+	case bool:
+		key = strconv.FormatBool(k)
+	default:
+		key = fmt.Sprintf("%v", a)
+	}
+
+	return key, val
 }
 
 func (l *EventLog) LogEventName() string {

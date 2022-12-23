@@ -8,24 +8,28 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
 	"todo-list/data"
+	"todo-list/eventlog"
 )
 
 type TaskController struct {
 	ctx   context.Context
 	store data.TaskStorage
+	log   *eventlog.EventLog
 }
 
-func NewTaskController() (*TaskController, error) {
+func NewTaskController(logger *eventlog.EventLog) (*TaskController, error) {
 	store, err := data.NewStorage()
 	if err != nil {
 		return nil, err
 	}
 	return &TaskController{
 		store: store,
+		log:   logger,
 	}, nil
 }
 
 func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
+	c.log.DebugEvent("Received GetTasksByID call", "id", id)
 	tasks, err := c.store.Get(data.WithID(id))
 	if err != nil {
 		if errors.Is(err, bolthold.ErrNotFound) {
@@ -40,6 +44,7 @@ func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
 }
 
 func (c *TaskController) GetAllTasks() ([]data.Task, error) {
+	c.log.DebugEvent("Received GetAllTasks call")
 	tasks, err := c.store.Get()
 	if err != nil {
 		return nil, err
@@ -48,10 +53,12 @@ func (c *TaskController) GetAllTasks() ([]data.Task, error) {
 }
 
 func (c *TaskController) Count() (int, error) {
+	c.log.DebugEvent("Received Count call")
 	return c.store.Count()
 }
 
 func (c *TaskController) CreateTask(task data.Task) (data.Task, error) {
+	c.log.DebugEvent("Received CreateTask call", "toCreate", task)
 	created, err := c.store.Create(task)
 	if err != nil {
 		return data.ZeroTask, err
@@ -60,6 +67,7 @@ func (c *TaskController) CreateTask(task data.Task) (data.Task, error) {
 }
 
 func (c *TaskController) UpdateTask(id uint64, task data.Task) (data.Task, error) {
+	c.log.DebugEvent("Received UpdateTask call", "id", id, "task", task)
 	updated, err := c.store.Update(id, task)
 	if err != nil {
 		return data.ZeroTask, err
@@ -68,6 +76,7 @@ func (c *TaskController) UpdateTask(id uint64, task data.Task) (data.Task, error
 }
 
 func (c *TaskController) DeleteTask(id uint64) error {
+	c.log.DebugEvent("Received DeleteTask call", "id", id)
 	if err := c.store.Delete(id); err != nil {
 		return err
 	}
@@ -75,6 +84,7 @@ func (c *TaskController) DeleteTask(id uint64) error {
 }
 
 func (c *TaskController) Export() (string, error) {
+	c.log.DebugEvent("Received Export call")
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -95,6 +105,7 @@ func (c *TaskController) Export() (string, error) {
 }
 
 func (c *TaskController) Import(strategy string) error {
+	c.log.DebugEvent("Received Import call")
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
