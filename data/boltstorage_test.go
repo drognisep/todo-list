@@ -132,6 +132,9 @@ func TestBoltStorage_Export(t *testing.T) {
 
 	temp, err := os.MkdirTemp("", "export_*")
 	assert.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(temp)
+	}()
 
 	snapshot, err := tstore.Export(temp)
 	require.NoError(t, err)
@@ -139,12 +142,12 @@ func TestBoltStorage_Export(t *testing.T) {
 	assert.NoError(t, tstore.Delete(created.ID))
 	count, err := tstore.Count()
 	assert.NoError(t, err)
-	assert.Equal(t, 0, count)
+	assert.Equal(t, 0, count, "Soft deleted task should not show up with count")
 
-	require.NoError(t, tstore.Import(snapshot, MergeError))
+	require.NoError(t, tstore.Import(snapshot, MergeOverwrite))
 	count, err = tstore.Count()
 	assert.NoError(t, err)
-	assert.Equal(t, 1, count)
+	require.Equal(t, 1, count, "Snapshot will overwrite state of the soft-deleted task")
 
 	found, err := tstore.Get(WithID(created.ID))
 	assert.NoError(t, err)

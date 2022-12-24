@@ -256,13 +256,7 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		// A duplicate was found, employ the MergeStrategy.
 		switch merge {
 		case MergeOverwrite:
-			dupe.Name = imported.Name
-			dupe.Description = imported.Description
-			dupe.Done = imported.Done
-			dupe.Priority = imported.Priority
-			dupe.Favorite = imported.Favorite
-
-			err := b.store.TxUpdate(tx, dupe.ID, dupe)
+			err := b.store.TxUpdate(tx, dupe.ID, imported)
 			if err != nil {
 				return rollback(err)
 			}
