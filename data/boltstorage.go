@@ -31,7 +31,14 @@ func newBoltStorage() (*boltStorage, error) {
 }
 
 func newBoltStorageAt(file string) (*boltStorage, error) {
-	store, err := bolthold.Open(file, 0700, &bolthold.Options{})
+	store, err := bolthold.Open(file, 0700, &bolthold.Options{
+		Encoder: func(value any) ([]byte, error) {
+			return json.Marshal(value)
+		},
+		Decoder: func(data []byte, value any) error {
+			return json.Unmarshal(data, value)
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
