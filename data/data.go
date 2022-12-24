@@ -6,7 +6,8 @@ type Task struct {
 	Description string `json:"description"`
 	Done        bool   `json:"done" boltholdIndex:"Done"`
 	Priority    int    `json:"priority" boltholdIndex:"Priority"`
-	Favorite    bool   `json:"favorite" boltholdIndex:"Favorite"`
+	Favorite    bool   `json:"favorite"`
+	SoftDeleted bool   `json:"inactivated" boltholdIndex:"SoftDeleted"`
 }
 
 type exportModel struct {

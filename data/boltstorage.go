@@ -86,10 +86,18 @@ func (t *taskSorter) Swap(i, j int) {
 	t.tasks[i], t.tasks[j] = t.tasks[j], t.tasks[i]
 }
 
-func (b *boltStorage) Get(filter ...TaskFilter) ([]Task, error) {
-	query := new(bolthold.Query)
+func (b *boltStorage) Get(filters ...TaskFilter) ([]Task, error) {
+	query := bolthold.Where("SoftDeleted").Eq(false)
+	return b.getTasks(query, filters)
+}
 
-	for _, f := range filter {
+func (b *boltStorage) GetHistoric(filters ...TaskFilter) ([]Task, error) {
+	query := new(bolthold.Query)
+	return b.getTasks(query, filters)
+}
+
+func (b *boltStorage) getTasks(query *bolthold.Query, filters []TaskFilter) ([]Task, error) {
+	for _, f := range filters {
 		f(query)
 	}
 
@@ -111,7 +119,7 @@ func (b *boltStorage) Count() (int, error) {
 	var count int
 	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {
 		var err error
-		count, err = b.store.TxCount(tx, new(Task), new(bolthold.Query))
+		count, err = b.store.TxCount(tx, new(Task), bolthold.Where("SoftDeleted").Eq(false))
 		if err != nil {
 			return err
 		}
@@ -138,10 +146,7 @@ func (b *boltStorage) Create(task Task) (Task, error) {
 
 func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
 	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
-		if err := b.store.TxUpdate(tx, id, &task); err != nil {
-			return err
-		}
-		return nil
+		return b.store.TxUpdate(tx, id, &task)
 	})
 	if err != nil {
 		if errors.Is(err, bolthold.ErrNotFound) {
@@ -154,7 +159,12 @@ func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
 
 func (b *boltStorage) Delete(id uint64) error {
 	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
-		return b.store.TxDelete(tx, id, new(Task))
+		task := new(Task)
+		if err := b.store.TxFindOne(tx, task, bolthold.Where(bolthold.Key).Eq(id)); err != nil {
+			return nil
+		}
+		task.SoftDeleted = true
+		return b.store.TxUpdate(tx, id, task)
 	})
 	if err != nil {
 		if errors.Is(err, bolthold.ErrNotFound) {
@@ -178,7 +188,7 @@ func (b *boltStorage) Export(dir string) (outName string, err error) {
 
 	writer := json.NewEncoder(out)
 
-	tasks, err := b.Get()
+	tasks, err := b.GetHistoric()
 	if err != nil {
 		return
 	}

@@ -7,6 +7,7 @@ export namespace data {
 	    done: boolean;
 	    priority: number;
 	    favorite: boolean;
+	    inactivated: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Task(source);
@@ -20,6 +21,7 @@ export namespace data {
 	        this.done = source["done"];
 	        this.priority = source["priority"];
 	        this.favorite = source["favorite"];
+	        this.inactivated = source["inactivated"];
 	    }
 	}
 

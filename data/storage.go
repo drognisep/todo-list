@@ -32,13 +32,15 @@ const (
 type TaskStorage interface {
 	// Get will retrieve Tasks that match the given filter(s), or all Tasks.
 	Get(...TaskFilter) ([]Task, error)
+	// GetHistoric will behave like Get, except that it will also get soft-deleted Tasks.
+	GetHistoric(...TaskFilter) ([]Task, error)
 	// Count will count the number of Tasks in the data store.
 	Count() (int, error)
 	// Create will create a new Task using the given template Task.
 	Create(template Task) (Task, error)
 	// Update will update the state of a Task referenced by id with the given template Task.
 	Update(id uint64, template Task) (Task, error)
-	// Delete will remove a Task record from the store.
+	// Delete will inactivate a Task record in the store by marking it as soft-deleted.
 	Delete(id uint64) error
 	// Export will write all Task data in the store to a timestamped CSV file in the given directory.
 	// If Export is successful, it will return the file system location of the exported data.
