@@ -7,6 +7,7 @@ import (
 	"github.com/timshannon/bolthold"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
+	"sync"
 	"todo-list/data"
 	"todo-list/eventlog"
 )
@@ -15,6 +16,9 @@ type TaskController struct {
 	ctx   context.Context
 	store data.TaskStorage
 	log   *eventlog.EventLog
+
+	mux             sync.Mutex
+	activeTimeEntry *data.TimeEntry
 }
 
 func NewTaskController(logger *eventlog.EventLog) (*TaskController, error) {
@@ -26,6 +30,32 @@ func NewTaskController(logger *eventlog.EventLog) (*TaskController, error) {
 		store: store,
 		log:   logger,
 	}, nil
+}
+
+func (c *TaskController) StartTask(taskID uint64) error {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	entry, err := c.store.StartTimeEntry(taskID)
+	if err != nil {
+		return err
+	}
+	c.activeTimeEntry = &entry
+	return nil
+}
+
+func (c *TaskController) StopTask() error {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	if c.activeTimeEntry == nil {
+		return nil
+	}
+	err := c.store.StopTimeEntry(*c.activeTimeEntry)
+	if err != nil {
+		return err
+	}
+
+	c.activeTimeEntry = nil
+	return err
 }
 
 func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {

@@ -3,6 +3,7 @@ package data
 import (
 	"errors"
 	"github.com/timshannon/bolthold"
+	"time"
 )
 
 var (
@@ -28,6 +29,52 @@ const (
 	MergeError        MergeStrategy = "Error"        // Don't attempt to merge, just return an error.
 )
 
+type TimeEntryFilter = func(query *bolthold.Query)
+
+// After will only return TimeEntry records that start on or after the given time.Time.
+func After(after time.Time) TimeEntryFilter {
+	return func(query *bolthold.Query) {
+		query.And("Start").Ge(after)
+	}
+}
+
+// Before will only return TimeEntry records that start on or before the given time.Time.
+func Before(before time.Time) TimeEntryFilter {
+	return func(query *bolthold.Query) {
+		query.And("End").Le(before)
+	}
+}
+
+// NotSynced will only return TimeEntry records that have not been as synced to an external store.
+func NotSynced() TimeEntryFilter {
+	return func(query *bolthold.Query) {
+		query.And("Synced").Eq(false)
+	}
+}
+
+// ForTask will only return TimeEntry records for a Task identified by its ID.
+func ForTask(taskID uint64) TimeEntryFilter {
+	return func(query *bolthold.Query) {
+		query.And("TaskID").Eq(taskID)
+	}
+}
+
+// SinceWeekday will return an After filter for the previous occurrence of the given weekday, at the beginning of the day.
+// If the goal time.Weekday matches that of the current day, then the filter will capture all TimeEntry records from 7 days ago.
+func SinceWeekday(goal time.Weekday) TimeEntryFilter {
+	return After(lastWeekday(goal, time.Now()))
+}
+
+func lastWeekday(goal time.Weekday, given time.Time) time.Time {
+	year, month, day := given.Date()
+	weekday := given.Weekday()
+	offset := int(goal - weekday)
+	if offset >= 0 {
+		offset -= 7
+	}
+	return time.Date(year, month, day+offset, 0, 0, 0, 0, given.Location())
+}
+
 // TaskStorage facilitates persistence operations for Task data.
 type TaskStorage interface {
 	// Get will retrieve Tasks that match the given filter(s), or all Tasks.
@@ -48,6 +95,14 @@ type TaskStorage interface {
 	// Import will read all Task data from the given file into the store.
 	// If a Task read from the file conflicts with the state of the store, then the given merge strategy will be used.
 	Import(file string, merge MergeStrategy) error
+	// StartTimeEntry will start progress on the Task identified by taskID.
+	// Returns a new TimeEntry when successful.
+	StartTimeEntry(taskID uint64) (TimeEntry, error)
+	// StopTimeEntry stops tracking for the given TimeEntry.
+	// Returns an error if the operation was not able to be completed.
+	StopTimeEntry(entry TimeEntry) error
+	// GetTimeEntries will return TimeEntry records that match the given criteria, or all if none are given.
+	GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error)
 }
 
 // Storage combines the existing persistence interfaces into one for convenience.

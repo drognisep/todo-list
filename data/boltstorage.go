@@ -275,3 +275,15 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 	}
 	return nil
 }
+
+func (b *boltStorage) StartTimeEntry(taskID uint64) (TimeEntry, error) {
+	return TimeEntry{}, nil
+}
+
+func (b *boltStorage) StopTimeEntry(entry TimeEntry) error {
+	return nil
+}
+
+func (b *boltStorage) GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error) {
+	return nil, nil
+}
