@@ -5,6 +5,7 @@ import (
 )
 
 type TimeEntry struct {
+	ID     uint64     `json:"id" boltholdKey:"ID"`
 	TaskID uint64     `json:"taskID" boltholdIndex:"TaskID"`
 	Start  time.Time  `json:"start" boltholdIndex:"Start"`
 	End    *time.Time `json:"end"`

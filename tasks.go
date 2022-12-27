@@ -32,9 +32,23 @@ func NewTaskController(logger *eventlog.EventLog) (*TaskController, error) {
 	}, nil
 }
 
+func (c *TaskController) GetTimeEntries(filters ...data.TimeEntryFilter) ([]data.TimeEntry, error) {
+	return c.store.GetTimeEntries(filters...)
+}
+
 func (c *TaskController) StartTask(taskID uint64) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
+
+	if c.activeTimeEntry != nil {
+		newEntry, err := c.store.StartAfterStop(taskID, c.activeTimeEntry.ID)
+		if err != nil {
+			return err
+		}
+		c.activeTimeEntry = &newEntry
+		return nil
+	}
+
 	entry, err := c.store.StartTimeEntry(taskID)
 	if err != nil {
 		return err
@@ -46,10 +60,11 @@ func (c *TaskController) StartTask(taskID uint64) error {
 func (c *TaskController) StopTask() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
+
 	if c.activeTimeEntry == nil {
 		return nil
 	}
-	err := c.store.StopTimeEntry(*c.activeTimeEntry)
+	err := c.store.StopTimeEntry(c.activeTimeEntry.ID)
 	if err != nil {
 		return err
 	}
@@ -63,12 +78,12 @@ func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
 	tasks, err := c.store.Get(data.WithID(id))
 	if err != nil {
 		if errors.Is(err, bolthold.ErrNotFound) {
-			return data.ZeroTask, fmt.Errorf("%w: %v", data.ErrIDNotFound, err)
+			return data.Task{}, fmt.Errorf("%w: %v", data.ErrIDNotFound, err)
 		}
-		return data.ZeroTask, err
+		return data.Task{}, err
 	}
 	if len(tasks) != 1 {
-		return data.ZeroTask, data.ErrAmbiguousID
+		return data.Task{}, data.ErrAmbiguousID
 	}
 	return tasks[0], nil
 }
@@ -91,7 +106,7 @@ func (c *TaskController) CreateTask(task data.Task) (data.Task, error) {
 	c.log.DebugEvent("Received CreateTask call", "toCreate", task)
 	created, err := c.store.Create(task)
 	if err != nil {
-		return data.ZeroTask, err
+		return data.Task{}, err
 	}
 	return created, nil
 }
@@ -100,7 +115,7 @@ func (c *TaskController) UpdateTask(id uint64, task data.Task) (data.Task, error
 	c.log.DebugEvent("Received UpdateTask call", "id", id, "task", task)
 	updated, err := c.store.Update(id, task)
 	if err != nil {
-		return data.ZeroTask, err
+		return data.Task{}, err
 	}
 	return updated, nil
 }

@@ -10,7 +10,6 @@ var (
 	ErrIDNotFound              = errors.New("specified ID not found")
 	ErrAmbiguousID             = errors.New("ambiguous ID detected")
 	ErrUnmappedReqdImportField = errors.New("unable to map required import column")
-	ZeroTask                   = Task{}
 )
 
 type TaskFilter = func(query *bolthold.Query)
@@ -100,7 +99,10 @@ type TaskStorage interface {
 	StartTimeEntry(taskID uint64) (TimeEntry, error)
 	// StopTimeEntry stops tracking for the given TimeEntry.
 	// Returns an error if the operation was not able to be completed.
-	StopTimeEntry(entry TimeEntry) error
+	StopTimeEntry(entryID uint64) error
+	// StartAfterStop will start a new TimeEntry with startTaskID and stop the current entry in a single transaction.
+	// The Task's start time will match the TimeEntry's end time.
+	StartAfterStop(startTaskID uint64, stopEntryID uint64) (TimeEntry, error)
 	// GetTimeEntries will return TimeEntry records that match the given criteria, or all if none are given.
 	GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error)
 }

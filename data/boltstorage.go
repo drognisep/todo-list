@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 )
 
 const (
@@ -139,7 +140,7 @@ func (b *boltStorage) Create(task Task) (Task, error) {
 		return nil
 	})
 	if err != nil {
-		return ZeroTask, err
+		return Task{}, err
 	}
 	return task, nil
 }
@@ -150,9 +151,9 @@ func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
 	})
 	if err != nil {
 		if errors.Is(err, bolthold.ErrNotFound) {
-			return ZeroTask, fmt.Errorf("%w: %v", ErrIDNotFound, err)
+			return Task{}, fmt.Errorf("%w: %v", ErrIDNotFound, err)
 		}
-		return ZeroTask, err
+		return Task{}, err
 	}
 	return task, nil
 }
@@ -277,13 +278,91 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 }
 
 func (b *boltStorage) StartTimeEntry(taskID uint64) (TimeEntry, error) {
-	return TimeEntry{}, nil
+	var entry TimeEntry
+	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
+		now := time.Now()
+		var err error
+		entry, err = b.txStartTimeEntry(tx, taskID, now)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return TimeEntry{}, err
+	}
+	return entry, nil
 }
 
-func (b *boltStorage) StopTimeEntry(entry TimeEntry) error {
+func (b *boltStorage) txStartTimeEntry(tx *bbolt.Tx, taskID uint64, now time.Time) (TimeEntry, error) {
+	task := new(Task)
+	if err := b.store.TxFindOne(tx, task, bolthold.Where(bolthold.Key).Eq(taskID)); err != nil {
+		return TimeEntry{}, err
+	}
+	entry := TimeEntry{
+		TaskID: taskID,
+		Start:  now,
+	}
+	if err := b.store.TxInsert(tx, bolthold.NextSequence(), &entry); err != nil {
+		return TimeEntry{}, err
+	}
+	return entry, nil
+}
+
+func (b *boltStorage) StopTimeEntry(entryID uint64) error {
+	now := time.Now()
+
+	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
+		return b.txStopTimeEntry(tx, entryID, now)
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
+func (b *boltStorage) txStopTimeEntry(tx *bbolt.Tx, entryID uint64, now time.Time) error {
+	found := new(TimeEntry)
+	if err := b.store.TxFindOne(tx, found, bolthold.Where(bolthold.Key).Eq(entryID)); err != nil {
+		return err
+	}
+	found.End = &now
+	return b.store.TxUpdate(tx, entryID, *found)
+}
+
+func (b *boltStorage) StartAfterStop(startTaskID uint64, stopEntryID uint64) (TimeEntry, error) {
+	now := time.Now()
+	var entry TimeEntry
+
+	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
+		if err := b.txStopTimeEntry(tx, stopEntryID, now); err != nil {
+			return err
+		}
+		_entry, err := b.txStartTimeEntry(tx, startTaskID, now)
+		if err != nil {
+			return err
+		}
+		entry = _entry
+		return nil
+	})
+	return entry, err
+}
+
 func (b *boltStorage) GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error) {
-	return nil, nil
+	var entries []TimeEntry
+	query := new(bolthold.Query)
+
+	for _, filter := range filters {
+		filter(query)
+	}
+
+	query.SortBy("Start")
+
+	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
+		return b.store.TxFind(tx, &entries, query)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return entries, err
 }
