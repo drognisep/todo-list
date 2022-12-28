@@ -11,5 +11,6 @@ type Task struct {
 }
 
 type exportModel struct {
-	Tasks []Task `json:"tasks"`
+	Tasks       []Task      `json:"tasks"`
+	TimeEntries []TimeEntry `json:"timeEntries,omitempty"`
 }

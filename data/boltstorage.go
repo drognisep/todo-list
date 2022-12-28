@@ -191,9 +191,13 @@ func (b *boltStorage) Export(dir string) (outName string, err error) {
 
 	tasks, err := b.GetHistoric()
 	if err != nil {
-		return
+		return "", err
 	}
-	err = writer.Encode(exportModel{Tasks: tasks})
+	entries, err := b.GetTimeEntries()
+	if err != nil {
+		return "", err
+	}
+	err = writer.Encode(exportModel{Tasks: tasks, TimeEntries: entries})
 	if err != nil {
 		return
 	}
@@ -210,9 +214,8 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		_ = in.Close()
 	}()
 
-	reader := json.NewDecoder(in)
 	var model exportModel
-	if err := reader.Decode(&model); err != nil {
+	if err := json.NewDecoder(in).Decode(&model); err != nil {
 		return err
 	}
 
@@ -227,29 +230,47 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		return err
 	}
 
+	if err := b.importTasks(tx, model, merge); err != nil {
+		return rollback(err)
+	}
+	if err := b.importTimeEntries(tx, model, merge); err != nil {
+		return rollback(err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return rollback(err)
+	}
+	return nil
+}
+
+func (b *boltStorage) importTasks(tx *bbolt.Tx, model exportModel, merge MergeStrategy) error {
+
 	for _, imported := range model.Tasks {
 		switch {
 		case imported.ID == 0:
-			return rollback(fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/unset ID field"))
+			return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/unset ID field")
 		case len(imported.Name) == 0:
-			return rollback(fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/empty name field"))
+			return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/empty name field")
 		}
 
-		var dupe Task
+		var (
+			dupe Task
+			err  error
+		)
 		err = b.store.TxFindOne(tx, &dupe, bolthold.Where(bolthold.Key).Eq(imported.ID))
 		if err != nil {
 			if err != bolthold.ErrNotFound {
-				return rollback(err)
+				return err
 			}
 
 			// No dupe found, import it directly.
 			if err := b.store.TxInsert(tx, imported.ID, imported); err != nil {
-				return rollback(err)
+				return err
 			}
 			continue
 		}
 
-		// Check if the duple represents a different state.
+		// Check if the dupe represents a different state.
 		if dupe == imported {
 			continue
 		}
@@ -259,20 +280,67 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		case MergeOverwrite:
 			err := b.store.TxUpdate(tx, dupe.ID, imported)
 			if err != nil {
-				return rollback(err)
+				return err
 			}
 			continue
 		case MergeKeepInternal:
 			continue
 		case MergeError:
-			return rollback(errors.New("conflict discovered, rolling back import"))
+			return errors.New("conflict discovered, rolling back import")
 		default:
-			return rollback(fmt.Errorf("unrecognized merge strategy '%s'", merge))
+			return fmt.Errorf("unrecognized merge strategy '%s'", merge)
 		}
 	}
+	return nil
+}
 
-	if err := tx.Commit(); err != nil {
-		return rollback(err)
+func (b *boltStorage) importTimeEntries(tx *bbolt.Tx, model exportModel, merge MergeStrategy) error {
+
+	for _, imported := range model.TimeEntries {
+		switch {
+		case imported.ID == 0:
+			return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/unset ID field")
+		case imported.Start == time.Time{}:
+			return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/empty start field")
+		}
+
+		var (
+			dupe TimeEntry
+			err  error
+		)
+		err = b.store.TxFindOne(tx, &dupe, bolthold.Where(bolthold.Key).Eq(imported.ID))
+		if err != nil {
+			if err != bolthold.ErrNotFound {
+				return err
+			}
+
+			// No dupe found, import it directly.
+			if err := b.store.TxInsert(tx, imported.ID, imported); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// Check if the dupe represents a different state.
+		if dupe == imported {
+			continue
+		}
+
+		// A duplicate was found, employ the MergeStrategy.
+		switch merge {
+		case MergeOverwrite:
+			err := b.store.TxUpdate(tx, dupe.ID, imported)
+			if err != nil {
+				return err
+			}
+			continue
+		case MergeKeepInternal:
+			continue
+		case MergeError:
+			return errors.New("conflict discovered, rolling back import")
+		default:
+			return fmt.Errorf("unrecognized merge strategy '%s'", merge)
+		}
 	}
 	return nil
 }

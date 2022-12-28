@@ -166,11 +166,26 @@ func TestBoltStorage_Import(t *testing.T) {
 	"done": false,
 	"description": "With a description",
 	"favorite": true,
-	"priority": 3
+	"priority": 3,
+	"inactivated": false
+},{
+	"name": "Deleted Task",
+	"id": 2,
+	"done": true,
+	"description": "This should be deleted",
+	"favorite": false,
+	"priority": 4,
+	"inactivated": true
+}],
+"timeEntries": [{
+	"id": 1,
+	"taskID": 2,
+	"start": "2022-12-24T19:49:16.4883081Z",
+	"end": "2022-12-24T19:51:16.4883081Z"
 }]
 }`
 
-	temp, err := os.CreateTemp("", "import.csv")
+	temp, err := os.CreateTemp("", "import-*.json")
 	assert.NoError(t, err)
 	defer func() {
 		_ = temp.Close()
@@ -178,12 +193,13 @@ func TestBoltStorage_Import(t *testing.T) {
 	}()
 
 	_, err = io.Copy(temp, strings.NewReader(data))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, tstore.Import(temp.Name(), MergeError))
 
 	found, err := tstore.Get()
 	assert.NoError(t, err)
+	require.Len(t, found, 1)
 	assert.Equal(t, Task{
 		ID:          1,
 		Name:        "Test Task",
@@ -191,7 +207,18 @@ func TestBoltStorage_Import(t *testing.T) {
 		Done:        false,
 		Favorite:    true,
 		Priority:    3,
+		SoftDeleted: false,
 	}, found[0])
+
+	entries, err := tstore.GetTimeEntries(ForTask(2))
+	assert.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, uint64(1), entries[0].ID)
+	assert.Equal(t, uint64(2), entries[0].TaskID)
+	assert.True(t, entries[0].Start.Before(time.Now()), "Start time should be before now")
+	require.NotNil(t, entries[0].End)
+	assert.True(t, entries[0].End.Before(time.Now()), "End time should be before now")
+	assert.True(t, entries[0].Start.Before(*entries[0].End), "Start time should be before end time")
 }
 
 func TestBoltStorage_Import_ID_not_found(t *testing.T) {
@@ -255,7 +282,7 @@ func TestBoltStorage_StopTimeEntry(t *testing.T) {
 	entries, err := store.GetTimeEntries()
 	require.Len(t, entries, 1)
 	require.NotNil(t, entries[0].End)
-	assert.Less(t, *entries[0].End, time.Now())
+	assert.LessOrEqual(t, *entries[0].End, time.Now())
 }
 
 func TestBoltStorage_StartAfterStop(t *testing.T) {
