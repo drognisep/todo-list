@@ -10,6 +10,35 @@ import (
 	"time"
 )
 
+func (b *boltStorage) Export(dir string) (outName string, err error) {
+	out, err := os.CreateTemp(dir, exportPattern)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = out.Close()
+	}()
+
+	outName = out.Name()
+
+	writer := json.NewEncoder(out)
+
+	tasks, err := b.GetHistoric()
+	if err != nil {
+		return "", err
+	}
+	entries, err := b.GetTimeEntries()
+	if err != nil {
+		return "", err
+	}
+	err = writer.Encode(exportModel{Tasks: tasks, TimeEntries: entries})
+	if err != nil {
+		return
+	}
+
+	return outName, nil
+}
+
 func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 	in, err := os.Open(file)
 	if err != nil {
