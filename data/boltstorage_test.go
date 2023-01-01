@@ -221,10 +221,61 @@ func TestBoltStorage_Import(t *testing.T) {
 	assert.True(t, entries[0].Start.Before(*entries[0].End), "Start time should be before end time")
 }
 
+func TestBoltStorage_Import_no_ID_conflict(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	data := `{
+"tasks": [{
+	"name": "Test Task",
+	"id": 1,
+	"done": false,
+	"description": "With a description",
+	"favorite": true,
+	"priority": 3,
+	"inactivated": false
+},{
+	"name": "Deleted Task",
+	"id": 2,
+	"done": true,
+	"description": "This should be deleted",
+	"favorite": false,
+	"priority": 4,
+	"inactivated": true
+}],
+"timeEntries": [{
+	"id": 1,
+	"taskID": 2,
+	"start": "2022-12-24T19:49:16.4883081Z",
+	"end": "2022-12-24T19:51:16.4883081Z"
+}]
+}`
+
+	temp, err := os.CreateTemp("", "import-*.json")
+	assert.NoError(t, err)
+	defer func() {
+		_ = temp.Close()
+		assert.NoError(t, os.Remove(temp.Name()))
+	}()
+
+	_, err = io.Copy(temp, strings.NewReader(data))
+	require.NoError(t, err)
+
+	require.NoError(t, tstore.Import(temp.Name(), MergeError))
+
+	created, err := tstore.Create(Task{
+		Name:        "Possible conflict",
+		Description: "This should have an ID after what has been imported",
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(3), created.ID)
+}
+
 func TestBoltStorage_Import_ID_not_found(t *testing.T) {
 	tstore, cleanup := _newBoltStore(t)
 	defer cleanup()
 
+	// No id field, defaults to 0.
 	data := `{
 "tasks": [{
 	"name": "Test Task",
@@ -235,7 +286,7 @@ func TestBoltStorage_Import_ID_not_found(t *testing.T) {
 }]
 }`
 
-	temp, err := os.CreateTemp("", "import.csv")
+	temp, err := os.CreateTemp("", "import-*.json")
 	assert.NoError(t, err)
 	defer func() {
 		_ = temp.Close()
@@ -248,6 +299,43 @@ func TestBoltStorage_Import_ID_not_found(t *testing.T) {
 	err = tstore.Import(temp.Name(), MergeError)
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrUnmappedReqdImportField)
+}
+
+func TestBoltStorage_Import_TaskID_not_found(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	// TimeEntry's TaskID references a non-existent Task ID 2.
+	data := `{
+"tasks": [{
+	"id": 1,
+	"name": "Test Task",
+	"done": false,
+	"description": "With a description",
+	"favorite": true,
+	"priority": 3
+}],
+"timeEntries": [{
+	"id": 1,
+	"taskID": 2,
+	"start": "2022-12-24T19:49:16.4883081Z",
+	"end": "2022-12-24T19:51:16.4883081Z"
+}]
+}`
+
+	temp, err := os.CreateTemp("", "import-*.json")
+	assert.NoError(t, err)
+	defer func() {
+		_ = temp.Close()
+		assert.NoError(t, os.Remove(temp.Name()))
+	}()
+
+	_, err = io.Copy(temp, strings.NewReader(data))
+	assert.NoError(t, err)
+
+	err = tstore.Import(temp.Name(), MergeError)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrIDNotFound)
 }
 
 func TestBoltStorage_StartTimeEntry(t *testing.T) {

@@ -7,6 +7,8 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.etcd.io/bbolt"
 	"os"
+	"reflect"
+	"runtime/debug"
 	"time"
 )
 
@@ -39,7 +41,7 @@ func (b *boltStorage) Export(dir string) (outName string, err error) {
 	return outName, nil
 }
 
-func (b *boltStorage) Import(file string, merge MergeStrategy) error {
+func (b *boltStorage) Import(file string, merge MergeStrategy) (err error) {
 	in, err := os.Open(file)
 	if err != nil {
 		return err
@@ -63,14 +65,22 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		}
 		return err
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+			rerr := fmt.Errorf("%v", r)
+			if err != nil {
+				err = rollback(fmt.Errorf("%w: %v", err, rerr))
+			}
+			err = rollback(rerr)
+		}
+	}()
 
 	taskSet := &importSet[Task]{
 		records: model.Tasks,
 		getID:   func(t Task) uint64 { return t.ID },
 		validateImport: func(t Task) error {
 			switch {
-			case t.ID == 0:
-				return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/unset ID field")
 			case len(t.Name) == 0:
 				return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/empty name field")
 			}
@@ -82,12 +92,23 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) error {
 		getID:   func(e TimeEntry) uint64 { return e.ID },
 		validateImport: func(e TimeEntry) error {
 			switch {
-			case e.ID == 0:
-				return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/unset ID field")
+			case e.TaskID == 0:
+				return fmt.Errorf("%w: invalid Task ID of 0", ErrUnmappedReqdImportField)
 			case e.Start == time.Time{}:
 				return fmt.Errorf("%w: %v", ErrUnmappedReqdImportField, "missing/empty start field")
 			}
-			return nil
+
+			count, err := b.store.TxCount(tx, Task{}, bolthold.Where(bolthold.Key).Eq(e.TaskID))
+			switch {
+			case err != nil:
+				return err
+			case count > 1:
+				return ErrAmbiguousID
+			case count == 0:
+				return fmt.Errorf("%w: referenced Task ID '%d' does not exist", ErrIDNotFound, e.TaskID)
+			default:
+				return nil
+			}
 		},
 	}
 	if err := importRecords(b, tx, taskSet, merge); err != nil {
@@ -110,8 +131,14 @@ type importSet[T comparable] struct {
 }
 
 func importRecords[T comparable](b *boltStorage, tx *bbolt.Tx, dataSet *importSet[T], merge MergeStrategy) error {
+	if len(dataSet.records) == 0 {
+		return nil
+	}
 
 	for _, imported := range dataSet.records {
+		if dataSet.getID(imported) == 0 {
+			return fmt.Errorf("%w: missing/unset ID field", ErrUnmappedReqdImportField)
+		}
 		if err := dataSet.validateImport(imported); err != nil {
 			return err
 		}
@@ -154,5 +181,27 @@ func importRecords[T comparable](b *boltStorage, tx *bbolt.Tx, dataSet *importSe
 			return fmt.Errorf("unrecognized merge strategy '%s'", merge)
 		}
 	}
-	return nil
+
+	// Reset key sequence after all imports have been added.
+	var (
+		record T
+		max    uint64
+	)
+	agg, err := b.store.TxFindAggregate(tx, record, nil)
+	if err != nil {
+		return err
+	}
+	for _, a := range agg {
+		a.Max("ID", &record)
+		_max := dataSet.getID(record)
+		if _max > max {
+			max = _max
+		}
+	}
+	typeName := reflect.TypeOf(record).Name()
+	bucket, err := tx.CreateBucketIfNotExists([]byte(typeName))
+	if err != nil {
+		return fmt.Errorf("%w: unable to create bucket for type '%s'", err, typeName)
+	}
+	return bucket.SetSequence(max)
 }
