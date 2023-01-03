@@ -113,7 +113,9 @@ export default {
         });
     GetTrackedTaskDetails()
         .then(details => {
-          this.trackedTaskID = details.task.id;
+          if (details != null) {
+            this.trackedTaskID = details.task.id;
+          }
         })
         .catch(console.errorEvent)
         .then(() => {

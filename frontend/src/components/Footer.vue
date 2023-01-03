@@ -75,10 +75,12 @@ export default {
     onTaskStarted() {
       GetTrackedTaskDetails()
           .then(details => {
-            this.trackedDetails = details;
-            this.secondsTicker = setInterval(() => {
-              this.secondsTracked = Math.floor((Date.now() - new Date(this.trackedDetails.entry.start)) / 1000);
-            }, 1000);
+            if (details != null) {
+              this.trackedDetails = details;
+              this.secondsTicker = setInterval(() => {
+                this.secondsTracked = Math.floor((Date.now() - new Date(this.trackedDetails.entry.start)) / 1000);
+              }, 1000);
+            }
           })
           .catch(console.errorEvent);
     },
