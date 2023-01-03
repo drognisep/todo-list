@@ -391,6 +391,78 @@ func TestBoltStorage_Import_ID_conflict_append(t *testing.T) {
 	assert.Equal(t, uint64(2), entries[0].TaskID)
 }
 
+func TestBoltStorage_Import_ID_sequence_conflict_append(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	// This is simulating a situation where the sequence could legitimately run into the area of the import set through append.
+	// Test Task 1 will be appended and its ID mapped to 2.
+	// Test Task 3 will be inserted directly as there is no conflict.
+	// Test Task 2 will find the new Task 2 and try to append, but there's already a Task with ID 3.
+	// The sequence should be updated to return an ID beyond 3 since 3 has already been inserted.
+	data := `{
+"tasks": [{
+	"name": "Test Task 1",
+	"id": 1,
+	"done": false,
+	"description": "This should conflict with task 1",
+	"favorite": true,
+	"priority": 3,
+	"inactivated": false
+},{
+	"name": "Test Task 3",
+	"id": 3,
+	"done": false,
+	"description": "This should be inserted no problem",
+	"favorite": true,
+	"priority": 3,
+	"inactivated": false
+},{
+	"name": "Test Task 2",
+	"id": 2,
+	"done": false,
+	"description": "This should conflict with task 2, and be inserted as task 4",
+	"favorite": true,
+	"priority": 3,
+	"inactivated": false
+}]
+}`
+
+	// First, create the conflicting record.
+	// This should be considered the local source of truth.
+	created, err := tstore.Create(Task{
+		Name: "I'm a problem",
+	})
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), created.ID)
+
+	// Now do the import
+	temp, err := os.CreateTemp("", "import-*.json")
+	assert.NoError(t, err)
+	defer func() {
+		_ = temp.Close()
+		assert.NoError(t, os.Remove(temp.Name()))
+	}()
+
+	_, err = io.Copy(temp, strings.NewReader(data))
+	require.NoError(t, err)
+
+	assert.NoError(t, tstore.Import(temp.Name(), MergeAppend))
+
+	expectedIDs := map[uint64]bool{
+		1: true,
+		2: true,
+		3: true,
+		4: true,
+	}
+	tasks, err := tstore.Get()
+	assert.NoError(t, err)
+	assert.Len(t, tasks, 4)
+	for _, task := range tasks {
+		assert.True(t, expectedIDs[task.ID], "ID %d was not in the expected set of IDs", task.ID)
+	}
+}
+
 func TestBoltStorage_StartTimeEntry(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()

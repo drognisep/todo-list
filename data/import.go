@@ -224,7 +224,17 @@ func importRecords[T comparable](b *boltStorage, tx *bbolt.Tx, dataSet *importSe
 			dataSet.resetID(&imported)
 			err := b.store.TxInsert(tx, bolthold.NextSequence(), &imported)
 			if err != nil {
-				return err
+				// Reset and retry if it's a sequence issue.
+				if errors.Is(err, bolthold.ErrKeyExists) {
+					if err := resetKeySequence(b, tx, dataSet); err != nil {
+						return err
+					}
+					if err := b.store.TxInsert(tx, bolthold.NextSequence(), &imported); err != nil {
+						return err
+					}
+				} else {
+					return err
+				}
 			}
 			dataSet.appendMap[importID] = dataSet.getID(imported)
 		default:
