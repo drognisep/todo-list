@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+type MergeStrategy = string
+
+const (
+	MergeKeepInternal MergeStrategy = "KeepInternal" // Refuse conflicting updates.
+	MergeOverwrite    MergeStrategy = "Overwrite"    // Overwrite the local store with data from the snapshot.
+	MergeError        MergeStrategy = "Error"        // Don't attempt to merge, just return an error.
+	MergeAppend       MergeStrategy = "Append"       // Appends conflicting items and maps the IDs relative to the import set to avoid dangling references.
+)
+
 func (b *boltStorage) Export(dir string) (outName string, err error) {
 	out, err := os.CreateTemp(dir, exportPattern)
 	if err != nil {
@@ -39,6 +48,24 @@ func (b *boltStorage) Export(dir string) (outName string, err error) {
 	}
 
 	return outName, nil
+}
+
+type idMapping map[uint64]uint64
+
+func (m idMapping) mapID(id uint64) uint64 {
+	if mapped, ok := m[id]; ok {
+		return mapped
+	}
+	return id
+}
+
+type importSet[T comparable] struct {
+	records         []T
+	getID           func(T) uint64
+	resetID         func(*T)
+	normalizeImport func(*T)
+	validateImport  func(T) error
+	appendMap       idMapping
 }
 
 func (b *boltStorage) Import(file string, merge MergeStrategy) (err error) {
@@ -79,6 +106,9 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) (err error) {
 	taskSet := &importSet[Task]{
 		records: model.Tasks,
 		getID:   func(t Task) uint64 { return t.ID },
+		resetID: func(t *Task) {
+			t.ID = 0
+		},
 		validateImport: func(t Task) error {
 			switch {
 			case len(t.Name) == 0:
@@ -90,6 +120,12 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) (err error) {
 	timeEntrySet := &importSet[TimeEntry]{
 		records: model.TimeEntries,
 		getID:   func(e TimeEntry) uint64 { return e.ID },
+		resetID: func(e *TimeEntry) {
+			e.ID = 0
+		},
+		normalizeImport: func(e *TimeEntry) {
+			e.TaskID = taskSet.appendMap.mapID(e.TaskID)
+		},
 		validateImport: func(e TimeEntry) error {
 			switch {
 			case e.TaskID == 0:
@@ -124,20 +160,26 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) (err error) {
 	return nil
 }
 
-type importSet[T comparable] struct {
-	records        []T
-	getID          func(T) uint64
-	validateImport func(T) error
-}
-
 func importRecords[T comparable](b *boltStorage, tx *bbolt.Tx, dataSet *importSet[T], merge MergeStrategy) error {
 	if len(dataSet.records) == 0 {
 		return nil
+	}
+	if dataSet.getID == nil {
+		return errors.New("missing data set method 'getID'")
+	}
+	if dataSet.validateImport == nil {
+		return errors.New("missing data set method 'validateImport'")
+	}
+	if dataSet.appendMap == nil {
+		dataSet.appendMap = idMapping{}
 	}
 
 	for _, imported := range dataSet.records {
 		if dataSet.getID(imported) == 0 {
 			return fmt.Errorf("%w: missing/unset ID field", ErrUnmappedReqdImportField)
+		}
+		if dataSet.normalizeImport != nil {
+			dataSet.normalizeImport(&imported)
 		}
 		if err := dataSet.validateImport(imported); err != nil {
 			return err
@@ -177,12 +219,24 @@ func importRecords[T comparable](b *boltStorage, tx *bbolt.Tx, dataSet *importSe
 			continue
 		case MergeError:
 			return errors.New("conflict discovered, rolling back import")
+		case MergeAppend:
+			importID := dataSet.getID(imported)
+			dataSet.resetID(&imported)
+			err := b.store.TxInsert(tx, bolthold.NextSequence(), &imported)
+			if err != nil {
+				return err
+			}
+			dataSet.appendMap[importID] = dataSet.getID(imported)
 		default:
 			return fmt.Errorf("unrecognized merge strategy '%s'", merge)
 		}
 	}
 
 	// Reset key sequence after all imports have been added.
+	return resetKeySequence(b, tx, dataSet)
+}
+
+func resetKeySequence[T comparable](b *boltStorage, tx *bbolt.Tx, dataSet *importSet[T]) error {
 	var (
 		record T
 		max    uint64

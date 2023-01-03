@@ -9,7 +9,7 @@ import (
 var (
 	ErrIDNotFound              = errors.New("specified ID not found")
 	ErrAmbiguousID             = errors.New("ambiguous ID detected")
-	ErrUnmappedReqdImportField = errors.New("unable to map required import column")
+	ErrUnmappedReqdImportField = errors.New("unable to map required import field")
 )
 
 type TaskFilter = func(query *bolthold.Query)
@@ -19,14 +19,6 @@ func WithID(id uint64) TaskFilter {
 		query.And(bolthold.Key).Eq(id)
 	}
 }
-
-type MergeStrategy = string
-
-const (
-	MergeKeepInternal MergeStrategy = "KeepInternal" // Refuse conflicting updates.
-	MergeOverwrite    MergeStrategy = "Overwrite"    // Overwrite the local store with data from the snapshot.
-	MergeError        MergeStrategy = "Error"        // Don't attempt to merge, just return an error.
-)
 
 type TimeEntryFilter = func(query *bolthold.Query)
 

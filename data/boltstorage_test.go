@@ -338,6 +338,59 @@ func TestBoltStorage_Import_TaskID_not_found(t *testing.T) {
 	require.ErrorIs(t, err, ErrIDNotFound)
 }
 
+func TestBoltStorage_Import_ID_conflict_append(t *testing.T) {
+	tstore, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	// This is simulating a situation where there is an existing Task in the store that the import set conflicts with.
+	// The appendMap should have the new Task ID and the TimeEntry should relate to the Task 2.
+	// This all assumes that the import set is consistent with itself, which it should be if it was produced by Export.
+	// This also assumes that the bucket sequence is up-to-date with the local store's data.
+	data := `{
+"tasks": [{
+	"name": "Test Task",
+	"id": 1,
+	"done": false,
+	"description": "This should conflict with the task already created in the store",
+	"favorite": true,
+	"priority": 3,
+	"inactivated": false
+}],
+"timeEntries": [{
+	"id": 1,
+	"taskID": 1,
+	"start": "2022-12-24T19:49:16.4883081Z",
+	"end": "2022-12-24T19:51:16.4883081Z"
+}]
+}`
+
+	// First, create the conflicting record.
+	// This should be considered the local source of truth.
+	created, err := tstore.Create(Task{
+		Name: "I'm a problem",
+	})
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), created.ID)
+
+	// Now do the import
+	temp, err := os.CreateTemp("", "import-*.json")
+	assert.NoError(t, err)
+	defer func() {
+		_ = temp.Close()
+		assert.NoError(t, os.Remove(temp.Name()))
+	}()
+
+	_, err = io.Copy(temp, strings.NewReader(data))
+	require.NoError(t, err)
+
+	assert.NoError(t, tstore.Import(temp.Name(), MergeAppend))
+
+	entries, err := tstore.GetTimeEntries()
+	assert.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, uint64(2), entries[0].TaskID)
+}
+
 func TestBoltStorage_StartTimeEntry(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
@@ -425,6 +478,8 @@ func _newBoltStore(t *testing.T) (*boltStorage, func()) {
 		if err := os.RemoveAll(temp); err != nil {
 			t.Log("Failed to cleanup temp dir", err)
 			t.Fail()
+		} else {
+			t.Logf("Cleaned up test DB '%s'", temp)
 		}
 	}
 }
