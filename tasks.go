@@ -12,6 +12,11 @@ import (
 	"todo-list/eventlog"
 )
 
+const (
+	TaskStartedEvent = "taskStarted"
+	TaskStoppedEvent = "taskStopped"
+)
+
 type TaskController struct {
 	ctx   context.Context
 	store data.TaskStorage
@@ -32,8 +37,58 @@ func NewTaskController(logger *eventlog.EventLog) (*TaskController, error) {
 	}, nil
 }
 
+func (c *TaskController) onStartup(ctx context.Context) error {
+	c.ctx = ctx
+	entry, err := c.store.GetRunningTimeEntry()
+	if err != nil {
+		return err
+	}
+	if entry == nil {
+		return nil
+	}
+	c.activeTimeEntry = entry
+	runtime.EventsEmit(ctx, TaskStartedEvent, entry.TaskID)
+	return nil
+}
+
 func (c *TaskController) GetTimeEntries(filters ...data.TimeEntryFilter) ([]data.TimeEntry, error) {
 	return c.store.GetTimeEntries(filters...)
+}
+
+type jsObject = map[string]any
+
+func stoppedEvent(id uint64) jsObject {
+	return jsObject{
+		"stopped": id,
+	}
+}
+
+func startedEvent(id uint64) jsObject {
+	return jsObject{
+		"started": id,
+	}
+}
+
+type TrackedTaskDetails struct {
+	Task  data.Task      `json:"task"`
+	Entry data.TimeEntry `json:"entry"`
+}
+
+func (c *TaskController) GetTrackedTaskDetails() (*TrackedTaskDetails, error) {
+	if c.activeTimeEntry == nil {
+		return nil, nil
+	}
+	tasks, err := c.store.Get(data.WithID(c.activeTimeEntry.TaskID))
+	if err != nil {
+		return nil, err
+	}
+	if len(tasks) == 0 {
+		return nil, fmt.Errorf("unable to locate task by ID %d", c.activeTimeEntry.TaskID)
+	}
+	return &TrackedTaskDetails{
+		Task:  tasks[0],
+		Entry: *c.activeTimeEntry,
+	}, nil
 }
 
 func (c *TaskController) StartTask(taskID uint64) error {
@@ -41,11 +96,14 @@ func (c *TaskController) StartTask(taskID uint64) error {
 	defer c.mux.Unlock()
 
 	if c.activeTimeEntry != nil {
+		oldID := c.activeTimeEntry.TaskID
 		newEntry, err := c.store.StartAfterStop(taskID, c.activeTimeEntry.ID)
 		if err != nil {
 			return err
 		}
 		c.activeTimeEntry = &newEntry
+		runtime.EventsEmit(c.ctx, TaskStoppedEvent, stoppedEvent(oldID))
+		runtime.EventsEmit(c.ctx, TaskStartedEvent, startedEvent(newEntry.TaskID))
 		return nil
 	}
 
@@ -54,6 +112,7 @@ func (c *TaskController) StartTask(taskID uint64) error {
 		return err
 	}
 	c.activeTimeEntry = &entry
+	runtime.EventsEmit(c.ctx, TaskStartedEvent, startedEvent(entry.TaskID))
 	return nil
 }
 
@@ -64,12 +123,14 @@ func (c *TaskController) StopTask() error {
 	if c.activeTimeEntry == nil {
 		return nil
 	}
+	taskID := c.activeTimeEntry.TaskID
 	err := c.store.StopTimeEntry(c.activeTimeEntry.ID)
 	if err != nil {
 		return err
 	}
 
 	c.activeTimeEntry = nil
+	runtime.EventsEmit(c.ctx, TaskStoppedEvent, stoppedEvent(taskID))
 	return err
 }
 

@@ -10,6 +10,7 @@
       <span :title="$props.task.done ? 'Reopen' : 'Complete'" class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
       <span title="Pin" :class="['material-icons','favorite',$props.task.favorite ? 'favored' : '']" @click="taskFavorite">push_pin</span>
       <span title="Delete" class="material-icons delete" @click="deleteTask">delete</span>
+      <span :title="trackingTitle" class="material-icons" @click="toggleTracking">{{trackingLigature}}</span>
     </div>
     <TaskModal
         v-show="showUpdate"
@@ -23,6 +24,7 @@
 <script>
 import Modal from "./Modal.vue";
 import TaskModal from "./TaskModal.vue";
+import {StartTask, StopTask} from "../wailsjs/go/main/TaskController.js";
 
 const descLimit = 50;
 const nameLimit = 50;
@@ -33,6 +35,7 @@ export default {
   emits: ["taskDeleted", "taskUpdate"],
   props: {
     task: Object,
+    tracking: Boolean,
   },
   data() {
     return {
@@ -65,6 +68,15 @@ export default {
         return;
       }
       this.$emit('taskDeleted', this.$props.task.id);
+    },
+    toggleTracking() {
+      if (this.tracking) {
+        StopTask()
+            .catch(console.errorEvent);
+        return;
+      }
+      StartTask(this.task.id)
+          .catch(console.errorEvent);
     }
   },
   computed: {
@@ -128,6 +140,18 @@ export default {
         default:
           return "";
       }
+    },
+    trackingLigature() {
+      if (this.tracking) {
+        return "stop";
+      }
+      return "play_arrow";
+    },
+    trackingTitle() {
+      if (this.tracking) {
+        return "Stop tracking time";
+      }
+      return "Track time";
     },
   },
 }

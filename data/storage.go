@@ -97,6 +97,8 @@ type TaskStorage interface {
 	StartAfterStop(startTaskID uint64, stopEntryID uint64) (TimeEntry, error)
 	// GetTimeEntries will return TimeEntry records that match the given criteria, or all if none are given.
 	GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error)
+	// GetRunningTimeEntry returns the latest running time entry, if one exist.
+	GetRunningTimeEntry() (*TimeEntry, error)
 }
 
 // Storage combines the existing persistence interfaces into one for convenience.

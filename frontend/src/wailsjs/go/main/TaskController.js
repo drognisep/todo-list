@@ -30,6 +30,10 @@ export function GetTimeEntries(arg1) {
   return window['go']['main']['TaskController']['GetTimeEntries'](arg1);
 }
 
+export function GetTrackedTaskDetails() {
+  return window['go']['main']['TaskController']['GetTrackedTaskDetails']();
+}
+
 export function Import(arg1) {
   return window['go']['main']['TaskController']['Import'](arg1);
 }

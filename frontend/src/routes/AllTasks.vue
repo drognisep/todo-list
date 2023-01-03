@@ -17,6 +17,7 @@
           v-for="task in tasks"
           :key="task.id"
           :task="task"
+          :tracking="task.id === trackedTaskID"
           @taskDeleted="deleteTask"
           @taskUpdate="taskUpdate"
       />
@@ -32,10 +33,17 @@
 <script>
 import loadState from "../loadState.js";
 import Loading from "../components/Loading.vue";
-import {CreateTask, DeleteTask, GetAllTasks, UpdateTask} from "../wailsjs/go/main/TaskController.js";
+import {
+  CreateTask,
+  DeleteTask,
+  GetAllTasks,
+  GetTrackedTaskDetails,
+  UpdateTask
+} from "../wailsjs/go/main/TaskController.js";
 import Modal from "../components/Modal.vue";
 import TaskRow from "../components/TaskRow.vue";
 import TaskModal from "../components/TaskModal.vue";
+import {EventsOn} from "../wailsjs/runtime/runtime.js";
 
 export default {
   name: "AllTasks",
@@ -45,6 +53,7 @@ export default {
     return {
       tasks: [],
       newTasksShown: false,
+      trackedTaskID: 0,
     }
   },
   methods: {
@@ -79,6 +88,12 @@ export default {
             this.getTasks();
           })
     },
+    onTaskStarted(evt) {
+      this.trackedTaskID = evt.started;
+    },
+    onTaskStopped() {
+      this.trackedTaskID = 0;
+    },
   },
   computed: {
     noTasks() {
@@ -87,6 +102,7 @@ export default {
   },
   created() {
     this.startLoading();
+    this.startLoading();
     GetAllTasks()
         .then(tasks => {
           this.tasks = tasks;
@@ -94,7 +110,17 @@ export default {
         .catch(console.errorEvent)
         .then(() => {
           this.doneLoading();
+        });
+    GetTrackedTaskDetails()
+        .then(details => {
+          this.trackedTaskID = details.task.id;
         })
+        .catch(console.errorEvent)
+        .then(() => {
+          this.doneLoading();
+        });
+    EventsOn("taskStarted", this.onTaskStarted);
+    EventsOn("taskStopped", this.onTaskStopped);
   }
 }
 </script>

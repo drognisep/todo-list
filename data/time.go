@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"github.com/timshannon/bolthold"
 	"go.etcd.io/bbolt"
 	"time"
@@ -109,4 +110,23 @@ func (b *boltStorage) GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, e
 		return nil, err
 	}
 	return entries, err
+}
+
+func (b *boltStorage) GetRunningTimeEntry() (*TimeEntry, error) {
+	var result TimeEntry
+	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {
+		return b.store.TxFindOne(tx, &result,
+			bolthold.Where("End").
+				MatchFunc(func(entry *TimeEntry) (bool, error) {
+					return entry.End == nil, nil
+				}).
+				SortBy("Start").Reverse())
+	})
+	if err != nil {
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &result, nil
 }

@@ -524,6 +524,27 @@ func TestBoltStorage_StartAfterStop(t *testing.T) {
 	assert.Nil(t, entries[1].End)
 }
 
+func TestBoltStorage_GetRunningTimeEntry(t *testing.T) {
+	store, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	created, err := store.Create(Task{
+		Name: "A task",
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), created.ID)
+
+	entry, err := store.StartTimeEntry(created.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), entry.ID)
+	assert.Equal(t, created.ID, entry.TaskID)
+
+	running, err := store.GetRunningTimeEntry()
+	assert.NoError(t, err)
+	require.NotNil(t, running)
+	assert.Equal(t, entry.ID, running.ID)
+}
+
 func _newBoltStore(t *testing.T) (*boltStorage, func()) {
 	temp, err := os.MkdirTemp("", t.Name()+"_*")
 	require.NoError(t, err, "Failed to create temp dir")
