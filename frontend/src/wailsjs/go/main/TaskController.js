@@ -26,8 +26,20 @@ export function GetTaskByID(arg1) {
   return window['go']['main']['TaskController']['GetTaskByID'](arg1);
 }
 
+export function GetTimeEntries(arg1) {
+  return window['go']['main']['TaskController']['GetTimeEntries'](arg1);
+}
+
 export function Import(arg1) {
   return window['go']['main']['TaskController']['Import'](arg1);
+}
+
+export function StartTask(arg1) {
+  return window['go']['main']['TaskController']['StartTask'](arg1);
+}
+
+export function StopTask() {
+  return window['go']['main']['TaskController']['StopTask']();
 }
 
 export function UpdateTask(arg1, arg2) {
