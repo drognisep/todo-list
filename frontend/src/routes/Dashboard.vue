@@ -5,11 +5,12 @@
       <p>{{ count }}</p>
     </div>
     <TimeEntryViewer header="Today's Time Entries" :entries="todayEntries"/>
+    <TimeEntryViewer header="This Week's Time Entries" :entries="thisWeekEntries"/>
   </div>
 </template>
 
 <script>
-import {Count, GetTimeEntriesToday} from "../wailsjs/go/main/TaskController.js";
+import {Count, GetTimeEntriesForWeek, GetTimeEntriesToday} from "../wailsjs/go/main/TaskController.js";
 import Loading from "../components/Loading.vue";
 import loading from "../loadState.js";
 import TimeEntryViewer from "../components/TimeEntryViewer.vue";
@@ -24,6 +25,7 @@ export default {
       waiting: 0,
       count: 0,
       day: [],
+      week: [],
     }
   },
   methods: {
@@ -46,11 +48,22 @@ export default {
           })
           .catch(console.errorEvent)
           .then(this.doneLoading);
+
+      this.startLoading();
+      GetTimeEntriesForWeek()
+          .then(entries => {
+            this.week = entries;
+          })
+          .catch(console.errorEvent)
+          .then(this.doneLoading);
     }
   },
   computed: {
     todayEntries() {
       return this.day;
+    },
+    thisWeekEntries() {
+      return this.week;
     }
   },
   created() {

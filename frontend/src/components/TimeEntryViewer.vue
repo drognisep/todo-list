@@ -39,6 +39,12 @@ export default {
 </script>
 
 <style scoped>
+.entry-table {
+  width: 100%;
+}
+.entry-table table {
+  width: 100%;
+}
 th {
   font-weight: bold;
 }
