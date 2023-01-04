@@ -26,8 +26,12 @@ export function GetTaskByID(arg1) {
   return window['go']['main']['TaskController']['GetTaskByID'](arg1);
 }
 
-export function GetTimeEntries(arg1) {
-  return window['go']['main']['TaskController']['GetTimeEntries'](arg1);
+export function GetTimeEntriesForWeek() {
+  return window['go']['main']['TaskController']['GetTimeEntriesForWeek']();
+}
+
+export function GetTimeEntriesToday() {
+  return window['go']['main']['TaskController']['GetTimeEntriesToday']();
 }
 
 export function GetTrackedTaskDetails() {

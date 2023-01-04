@@ -26,6 +26,7 @@ import {EventsOff, EventsOn} from "../wailsjs/runtime/runtime.js";
 import {LogEventName} from "../wailsjs/go/eventlog/EventLog.js";
 import {GetTrackedTaskDetails} from "../wailsjs/go/main/TaskController.js";
 import Modal from "./Modal.vue";
+import {durationClock} from "../datetime.js";
 
 export default {
   name: "Footer",
@@ -111,27 +112,9 @@ export default {
       return this.trackedDetails != null;
     },
     timeString() {
-      let seconds = this.secondsTracked;
-      let minutes = 0;
-      while (seconds >= 60) {
-        minutes++;
-        seconds -= 60;
-      }
-      let hours = 0;
-      while (minutes >= 60) {
-        hours++;
-        minutes -= 60;
-      }
-      if (hours < 10) {
-        hours = '0' + hours;
-      }
-      if (minutes < 10) {
-        minutes = '0' + minutes;
-      }
-      if (seconds < 10) {
-        seconds = '0' + seconds;
-      }
-      return `${hours}:${minutes}:${seconds}`
+      let now = Date.now();
+      let start = now - this.secondsTracked * 1000
+      return durationClock(start, now);
     },
     taskDetailsString() {
       if (this.trackedDetails == null) {

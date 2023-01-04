@@ -50,6 +50,13 @@ func ForTask(taskID uint64) TimeEntryFilter {
 	}
 }
 
+// EntriesToday will return an After filter for TimeEntry records that occurred today.
+func EntriesToday() TimeEntryFilter {
+	now := time.Now()
+	after := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	return After(after)
+}
+
 // SinceWeekday will return an After filter for the previous occurrence of the given weekday, at the beginning of the day.
 // If the goal time.Weekday matches that of the current day, then the filter will capture all TimeEntry records from 7 days ago.
 func SinceWeekday(goal time.Weekday) TimeEntryFilter {

@@ -545,6 +545,44 @@ func TestBoltStorage_GetRunningTimeEntry(t *testing.T) {
 	assert.Equal(t, entry.ID, running.ID)
 }
 
+func TestBoltStorage_GetTimeEntries_After(t *testing.T) {
+	store, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	created, err := store.Create(Task{
+		Name: "Task",
+	})
+	require.NoError(t, err)
+
+	entry, err := store.StartTimeEntry(created.ID)
+	require.NoError(t, err)
+	require.NoError(t, store.StopTimeEntry(entry.ID))
+
+	entries, err := store.GetTimeEntries(SinceWeekday(time.Sunday))
+	assert.NoError(t, err)
+	assert.Len(t, entries, 1)
+	assert.Equal(t, entry.ID, entries[0].ID)
+}
+
+func TestBoltStorage_GetTimeEntries_EntriesToday(t *testing.T) {
+	store, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	created, err := store.Create(Task{
+		Name: "Task",
+	})
+	require.NoError(t, err)
+
+	entry, err := store.StartTimeEntry(created.ID)
+	require.NoError(t, err)
+	require.NoError(t, store.StopTimeEntry(entry.ID))
+
+	entries, err := store.GetTimeEntries(SinceWeekday(time.Sunday))
+	assert.NoError(t, err)
+	assert.Len(t, entries, 1)
+	assert.Equal(t, entry.ID, entries[0].ID)
+}
+
 func _newBoltStore(t *testing.T) (*boltStorage, func()) {
 	temp, err := os.MkdirTemp("", t.Name()+"_*")
 	require.NoError(t, err, "Failed to create temp dir")

@@ -8,6 +8,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
 	"sync"
+	"time"
 	"todo-list/data"
 	"todo-list/eventlog"
 )
@@ -51,8 +52,12 @@ func (c *TaskController) onStartup(ctx context.Context) error {
 	return nil
 }
 
-func (c *TaskController) GetTimeEntries(filters ...data.TimeEntryFilter) ([]data.TimeEntry, error) {
-	return c.store.GetTimeEntries(filters...)
+func (c *TaskController) GetTimeEntriesToday() ([]data.TimeEntry, error) {
+	return c.store.GetTimeEntries(data.EntriesToday())
+}
+
+func (c *TaskController) GetTimeEntriesForWeek() ([]data.TimeEntry, error) {
+	return c.store.GetTimeEntries(data.SinceWeekday(time.Sunday))
 }
 
 type jsObject = map[string]any
