@@ -13,6 +13,7 @@ import {Count, GetTimeEntriesToday} from "../wailsjs/go/main/TaskController.js";
 import Loading from "../components/Loading.vue";
 import loading from "../loadState.js";
 import TimeEntryViewer from "../components/TimeEntryViewer.vue";
+import {EventsOn} from "../wailsjs/runtime/runtime.js";
 
 export default {
   name: "Dashboard",
@@ -55,6 +56,8 @@ export default {
   created() {
     this.taskCount();
     this.timeEntryDetails();
+    EventsOn('taskStarted', this.timeEntryDetails);
+    EventsOn('taskStopped', this.timeEntryDetails);
   },
 }
 </script>

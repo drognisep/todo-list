@@ -3,6 +3,9 @@
     <h3 v-text="header"></h3>
     <table v-if="hasEntries">
       <tr>
+        <th>Day</th>
+        <th>Start</th>
+        <th>End</th>
         <th>Duration</th>
         <th>Task</th>
       </tr>
@@ -26,6 +29,9 @@ export default {
   },
   computed: {
     hasEntries() {
+      if (this.entries == null) {
+        return false;
+      }
       return this.entries.length > 0;
     }
   },
