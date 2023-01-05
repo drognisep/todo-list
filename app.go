@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"log"
 	"strings"
 	"time"
 	"todo-list/eventlog"
@@ -28,7 +29,10 @@ func NewApp(logger *eventlog.EventLog, tasks *TaskController) *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.tasks.ctx = ctx
+	if err := a.tasks.onStartup(ctx); err != nil {
+		// TODO: Add some more helpful error reporting mechanism.
+		log.Fatalln("Failed to start task controller:", err)
+	}
 	a.logger.Ctx = ctx
 
 	valueFormatter := func(values map[string]any) string {

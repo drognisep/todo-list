@@ -4,30 +4,32 @@ const debugEnabled = false;
 
 export default {
     setup() {
-        console.logEvent = (msg, args) => {
-            if (!args) {
-                args = [];
+        console.logEvent = function (msg, ...args) {
+            if (typeof msg !== 'string') {
+                msg = `${msg}`;
             }
             InfoEvent(msg, args)
                 .catch(console.error)
         };
-        console.warnEvent = (msg, args) => {
-            if (!args) {
-                args = [];
+        console.warnEvent = function (msg, ...args) {
+            console.trace();
+            if (typeof msg !== 'string') {
+                msg = `${msg}`;
             }
             WarnEvent(msg, args)
                 .catch(console.error)
         };
-        console.errorEvent = (msg, args) => {
-            if (!args) {
-                args = [];
+        console.errorEvent = function (msg, ...args) {
+            console.trace();
+            if (typeof msg !== 'string') {
+                msg = `${msg}`;
             }
             ErrorEvent(msg, args)
                 .catch(console.error)
         };
-        console.debugEvent = (msg, args) => {
-            if (!args) {
-                args = [];
+        console.debugEvent = function (msg, ...args) {
+            if (typeof msg !== 'string') {
+                msg = `${msg}`;
             }
             DebugEvent(msg, args)
                 .catch(console.error)

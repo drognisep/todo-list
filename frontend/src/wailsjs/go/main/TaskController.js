@@ -26,8 +26,28 @@ export function GetTaskByID(arg1) {
   return window['go']['main']['TaskController']['GetTaskByID'](arg1);
 }
 
+export function GetTimeEntriesForWeek() {
+  return window['go']['main']['TaskController']['GetTimeEntriesForWeek']();
+}
+
+export function GetTimeEntriesToday() {
+  return window['go']['main']['TaskController']['GetTimeEntriesToday']();
+}
+
+export function GetTrackedTaskDetails() {
+  return window['go']['main']['TaskController']['GetTrackedTaskDetails']();
+}
+
 export function Import(arg1) {
   return window['go']['main']['TaskController']['Import'](arg1);
+}
+
+export function StartTask(arg1) {
+  return window['go']['main']['TaskController']['StartTask'](arg1);
+}
+
+export function StopTask() {
+  return window['go']['main']['TaskController']['StopTask']();
 }
 
 export function UpdateTask(arg1, arg2) {

@@ -35,6 +35,8 @@
 html {
     background-color: var(--bg-color);
     margin: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
 body {

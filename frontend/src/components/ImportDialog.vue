@@ -56,13 +56,14 @@ export default {
   },
   computed: {
     mergeStrategies() {
-      return ['KeepInternal', 'Overwrite', 'Error'];
+      return ['KeepInternal', 'Overwrite', 'Error', 'Append'];
     },
     mergeDesc() {
       return [
         "Do not overwrite the state in your task store",
         "Overwrite data in your task store if there's a conflict",
         "Return an error if there's a conflict",
+        "Append data, use this if the snapshot is from someone else",
       ];
     }
   },
