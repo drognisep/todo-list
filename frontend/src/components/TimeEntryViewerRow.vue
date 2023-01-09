@@ -4,7 +4,7 @@
     <td><p>{{ startTime }}</p></td>
     <td><p>{{ endTime }}</p></td>
     <td><p>{{ duration }}</p></td>
-    <td><p>{{ taskName }}</p></td>
+    <td><p>{{ nameWrap(taskName) }}</p></td>
   </tr>
 </template>
 
@@ -24,6 +24,14 @@ export default {
       entryState: null,
       taskState: null,
     };
+  },
+  methods: {
+    nameWrap(s) {
+      if (s.length >= 30) {
+        return s.substring(0, 27) + "...";
+      }
+      return s;
+    },
   },
   computed: {
     dayOfWeek() {

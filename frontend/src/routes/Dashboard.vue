@@ -4,8 +4,8 @@
     <div class="line"><p>Task Count: </p>
       <p>{{ count }}</p>
     </div>
-    <TimeEntryViewer header="Today's Time Entries" :entries="todayEntries"/>
-    <TimeEntryViewer header="This Week's Time Entries" :entries="thisWeekEntries"/>
+    <TimeEntryViewer show-totals header="Today's Time Entries" :entries="todayEntries"/>
+    <TimeEntryViewer show-totals header="This Week's Time Entries" :entries="thisWeekEntries"/>
   </div>
 </template>
 
@@ -56,7 +56,7 @@ export default {
           })
           .catch(console.errorEvent)
           .then(this.doneLoading);
-    }
+    },
   },
   computed: {
     todayEntries() {

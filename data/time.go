@@ -103,7 +103,7 @@ func (b *boltStorage) GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, e
 
 	query.SortBy("Start")
 
-	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
+	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {
 		return b.store.TxFind(tx, &entries, query)
 	})
 	if err != nil {

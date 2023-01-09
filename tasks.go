@@ -7,6 +7,7 @@ import (
 	"github.com/timshannon/bolthold"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
+	"sort"
 	"sync"
 	"time"
 	"todo-list/data"
@@ -56,8 +57,86 @@ func (c *TaskController) GetTimeEntriesToday() ([]data.TimeEntry, error) {
 	return c.store.GetTimeEntries(data.EntriesToday())
 }
 
+var _ sort.Interface = (*TimeEntrySummary)(nil)
+
+type TimeEntrySummary struct {
+	Lines []TaskSummary `json:"lines"`
+}
+
+func (t *TimeEntrySummary) Len() int {
+	return len(t.Lines)
+}
+
+func (t *TimeEntrySummary) Less(i, j int) bool {
+	return t.Lines[i].totalDur < t.Lines[j].totalDur
+}
+
+func (t *TimeEntrySummary) Swap(i, j int) {
+	t.Lines[i], t.Lines[j] = t.Lines[j], t.Lines[i]
+}
+
+type TaskSummary struct {
+	Name     string `json:"name"`
+	Total    string `json:"duration"`
+	totalDur time.Duration
+}
+
 func (c *TaskController) GetTimeEntriesForWeek() ([]data.TimeEntry, error) {
 	return c.store.GetTimeEntries(data.SinceWeekday(time.Sunday))
+}
+
+func (c *TaskController) GetSummaryForEntries(entries []data.TimeEntry) (*TimeEntrySummary, error) {
+	return c.calculateSummary(entries)
+}
+
+func (c *TaskController) calculateSummary(entries []data.TimeEntry) (*TimeEntrySummary, error) {
+	if len(entries) == 0 {
+		return &TimeEntrySummary{}, nil
+	}
+
+	var (
+		taskSummary = map[uint64]TaskSummary{}
+		entryTotal  = map[uint64]time.Duration{}
+		total       = time.Duration(0)
+		lines       []TaskSummary
+	)
+
+	for _, e := range entries {
+		if e.End == nil {
+			continue
+		}
+		if _, ok := taskSummary[e.TaskID]; !ok {
+			tasks, err := c.store.GetHistoric(data.WithID(e.TaskID))
+			if err != nil {
+				return nil, err
+			}
+			if len(tasks) == 0 {
+				return nil, fmt.Errorf("%w: unable to locate task ID '%d' in entry ID '%d'", data.ErrIDNotFound, e.TaskID, e.ID)
+			}
+			taskSummary[e.TaskID] = TaskSummary{Name: tasks[0].Name}
+		}
+
+		dur := e.End.Sub(e.Start)
+		total += dur
+
+		if entrySum, ok := entryTotal[e.TaskID]; ok {
+			entryTotal[e.TaskID] = entrySum + dur
+		} else {
+			entryTotal[e.TaskID] = dur
+		}
+	}
+
+	for tid, taskTotal := range entryTotal {
+		line := taskSummary[tid]
+		taskTotal = taskTotal.Truncate(time.Second)
+		line.totalDur = taskTotal
+		line.Total = taskTotal.String()
+		lines = append(lines, line)
+	}
+
+	summary := &TimeEntrySummary{Lines: lines}
+	sort.Sort(sort.Reverse(summary))
+	return summary, nil
 }
 
 type jsObject = map[string]any
@@ -141,7 +220,7 @@ func (c *TaskController) StopTask() error {
 
 func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
 	c.log.DebugEvent("Received GetTasksByID call", "id", id)
-	tasks, err := c.store.Get(data.WithID(id))
+	tasks, err := c.store.GetHistoric(data.WithID(id))
 	if err != nil {
 		if errors.Is(err, bolthold.ErrNotFound) {
 			return data.Task{}, fmt.Errorf("%w: %v", data.ErrIDNotFound, err)
