@@ -27,8 +27,8 @@ export default {
   },
   methods: {
     nameWrap(s) {
-      if (s.length >= 40) {
-        return s.substring(0, 37) + "...";
+      if (s.length >= 30) {
+        return s.substring(0, 27) + "...";
       }
       return s;
     },

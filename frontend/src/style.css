@@ -120,3 +120,58 @@ select {
     color: var(--fg-color);
     font-size: 1.1em;
 }
+
+table.table {
+    width: 100%;
+    --radius: 8px;
+    --border-size: 2px;
+
+    border-radius: var(--radius);
+    border: var(--border-dark);
+    border-spacing: 0;
+}
+
+table.table tr:first-child {
+    font-weight: bold;
+    background-color: var(--bg-color-light);
+}
+
+table.table th {
+    text-align: center;
+}
+
+table.table th:first-child {
+    border-top-left-radius: calc(var(--radius) - 2px);
+}
+
+table.table th:last-child {
+    border-top-right-radius: calc(var(--radius) - 2px);
+}
+
+table.table tr:last-child td:first-child {
+    border-bottom-left-radius: calc(var(--radius) - 2px);
+}
+
+table.table tr:last-child td:last-child {
+    border-bottom-right-radius: calc(var(--radius) - 2px);
+}
+
+table.table tr:nth-child(even) {
+    background-color: var(--bg-color);
+}
+
+table.table tr:nth-child(odd) {
+    background-color: var(--bg-color-light);
+}
+
+table.table th, table.table td {
+    border-right: var(--border-light);
+}
+
+table.table th:last-child, table.table td:last-child {
+    border-right: none;
+}
+
+table.table td:first-child {
+    padding-left: 8px;
+}

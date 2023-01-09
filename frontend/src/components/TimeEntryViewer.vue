@@ -3,7 +3,7 @@
     <div class="table-container" v-if="hasEntries && showTotals">
       <div>
         <h3 v-text="header"></h3>
-        <table>
+        <table class="table">
           <tr>
             <th>Day</th>
             <th>Start</th>
@@ -14,9 +14,9 @@
           <TimeEntryViewerRow v-for="entry in entries" :entry="entry"/>
         </table>
       </div>
-      <div>
+      <div style="margin-left:8px;">
         <h3>{{header}} Summary</h3>
-        <table>
+        <table class="table">
           <tr>
             <th>Task</th>
             <th>Duration</th>
@@ -30,7 +30,7 @@
     </div>
     <div v-else-if="hasEntries">
       <h3 v-text="header"></h3>
-      <table>
+      <table class="table">
         <tr>
           <th>Day</th>
           <th>Start</th>
