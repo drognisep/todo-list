@@ -16,7 +16,7 @@ type TaskFilter = func(query *bolthold.Query)
 
 func WithID(id uint64) TaskFilter {
 	return func(query *bolthold.Query) {
-		query.And(bolthold.Key).Eq(id)
+		query.And(bolthold.Key).Eq(id).Limit(1)
 	}
 }
 

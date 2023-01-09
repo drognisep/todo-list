@@ -22,6 +22,10 @@ export function GetAllTasks() {
   return window['go']['main']['TaskController']['GetAllTasks']();
 }
 
+export function GetSummaryForEntries(arg1) {
+  return window['go']['main']['TaskController']['GetSummaryForEntries'](arg1);
+}
+
 export function GetTaskByID(arg1) {
   return window['go']['main']['TaskController']['GetTaskByID'](arg1);
 }

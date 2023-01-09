@@ -13,6 +13,8 @@ export function Export():Promise<string>;
 
 export function GetAllTasks():Promise<Array<data.Task>>;
 
+export function GetSummaryForEntries(arg1:Array<data.TimeEntry>):Promise<main.TimeEntrySummary>;
+
 export function GetTaskByID(arg1:number):Promise<data.Task>;
 
 export function GetTimeEntriesForWeek():Promise<Array<data.TimeEntry>>;
