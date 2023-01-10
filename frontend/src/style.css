@@ -131,6 +131,10 @@ table.table {
     border-spacing: 0;
 }
 
+table.table td {
+    user-select: text;
+}
+
 table.table tr:first-child {
     font-weight: bold;
     background-color: var(--bg-color-light);
