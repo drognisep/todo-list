@@ -21,9 +21,13 @@
             <th>Task</th>
             <th>Duration</th>
           </tr>
-          <tr v-for="line in summaryLines" :key="line.name">
+          <tr v-for="line in summary.lines" :key="line.name">
             <td>{{ summaryWrap(line.name) }}</td>
             <td>{{ line.duration }}</td>
+          </tr>
+          <tr>
+            <td><b>Total</b></td>
+            <td><b>{{ summary.total || '0s' }}</b></td>
           </tr>
         </table>
       </div>
@@ -41,7 +45,10 @@
         <TimeEntryViewerRow v-for="entry in entries" :entry="entry"/>
       </table>
     </div>
-    <h3 v-else>No time entries found</h3>
+    <div v-else>
+      <h3>{{header}}</h3>
+      <h4>No time entries found</h4>
+    </div>
   </div>
 </template>
 
@@ -59,7 +66,7 @@ export default {
   },
   data() {
     return {
-      summaryLines: [],
+      summary: {},
     };
   },
   methods: {
@@ -84,7 +91,7 @@ export default {
         if (this.showTotals) {
           GetSummaryForEntries(newEntries)
               .then(summary => {
-                this.summaryLines = summary.lines;
+                this.summary = summary;
               })
               .catch(console.errorEvent)
         }

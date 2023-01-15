@@ -61,6 +61,7 @@ var _ sort.Interface = (*TimeEntrySummary)(nil)
 
 type TimeEntrySummary struct {
 	Lines []TaskSummary `json:"lines"`
+	Total string        `json:"total"`
 }
 
 func (t *TimeEntrySummary) Len() int {
@@ -96,7 +97,7 @@ func (c *TaskController) calculateSummary(entries []data.TimeEntry) (*TimeEntryS
 
 	var (
 		taskSummary = map[uint64]TaskSummary{}
-		entryTotal  = map[uint64]time.Duration{}
+		entryTotals = map[uint64]time.Duration{}
 		total       = time.Duration(0)
 		lines       []TaskSummary
 	)
@@ -116,25 +117,24 @@ func (c *TaskController) calculateSummary(entries []data.TimeEntry) (*TimeEntryS
 			taskSummary[e.TaskID] = TaskSummary{Name: tasks[0].Name}
 		}
 
-		dur := e.End.Sub(e.Start)
+		dur := e.End.Sub(e.Start).Round(time.Second)
 		total += dur
+		var runningTotal time.Duration
 
-		if entrySum, ok := entryTotal[e.TaskID]; ok {
-			entryTotal[e.TaskID] = entrySum + dur
-		} else {
-			entryTotal[e.TaskID] = dur
+		if cachedTotal, ok := entryTotals[e.TaskID]; ok {
+			runningTotal = cachedTotal
 		}
+		entryTotals[e.TaskID] = runningTotal + dur
 	}
 
-	for tid, taskTotal := range entryTotal {
+	for tid, taskTotal := range entryTotals {
 		line := taskSummary[tid]
-		taskTotal = taskTotal.Truncate(time.Second)
 		line.totalDur = taskTotal
 		line.Total = taskTotal.String()
 		lines = append(lines, line)
 	}
 
-	summary := &TimeEntrySummary{Lines: lines}
+	summary := &TimeEntrySummary{Lines: lines, Total: total.String()}
 	sort.Sort(sort.Reverse(summary))
 	return summary, nil
 }
