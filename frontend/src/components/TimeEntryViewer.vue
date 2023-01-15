@@ -45,7 +45,10 @@
         <TimeEntryViewerRow v-for="entry in entries" :entry="entry"/>
       </table>
     </div>
-    <h3 v-else>No time entries found</h3>
+    <div v-else>
+      <h3>{{header}}</h3>
+      <h4>No time entries found</h4>
+    </div>
   </div>
 </template>
 
