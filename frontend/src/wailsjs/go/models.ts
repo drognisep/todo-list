@@ -85,6 +85,7 @@ export namespace main {
 	}
 	export class TimeEntrySummary {
 	    lines: TaskSummary[];
+	    total: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new TimeEntrySummary(source);
@@ -93,6 +94,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.lines = this.convertValues(source["lines"], TaskSummary);
+	        this.total = source["total"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
