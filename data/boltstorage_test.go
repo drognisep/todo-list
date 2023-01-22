@@ -584,7 +584,8 @@ func TestBoltStorage_GetTimeEntries_EntriesToday(t *testing.T) {
 }
 
 func _newBoltStore(t *testing.T) (*boltStorage, func()) {
-	temp, err := os.MkdirTemp("", t.Name()+"_*")
+	testName := strings.ReplaceAll(strings.ReplaceAll(t.Name(), "/", "__"), "\\", "__")
+	temp, err := os.MkdirTemp("", testName+"_*")
 	require.NoError(t, err, "Failed to create temp dir")
 
 	dbFile := filepath.Join(temp, "testDB.db")
