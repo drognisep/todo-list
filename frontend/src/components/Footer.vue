@@ -1,6 +1,8 @@
 <template>
   <div id="footer">
-    <div class="left"></div>
+    <div class="left">
+      <p v-if="isTracking" v-text="taskDetailsString"></p>
+    </div>
     <div class="right">
       <span v-show="hasWarnings" title="Warnings" class="warn-count badge"
             @click="showLogs = true">{{ warnings }}</span>
@@ -22,7 +24,9 @@
 <script>
 import {EventsOff, EventsOn} from "../wailsjs/runtime/runtime.js";
 import {LogEventName} from "../wailsjs/go/eventlog/EventLog.js";
+import {GetTrackedTaskDetails} from "../wailsjs/go/main/TaskController.js";
 import Modal from "./Modal.vue";
+import {durationClock} from "../datetime.js";
 
 export default {
   name: "Footer",
@@ -33,6 +37,9 @@ export default {
       warnings: 0,
       logs: [],
       showLogs: false,
+      trackedDetails: null,
+      secondsTracked: 0,
+      secondsTicker: null,
     };
   },
   methods: {
@@ -66,6 +73,23 @@ export default {
     hideLogs() {
       this.showLogs = false;
     },
+    onTaskStarted() {
+      GetTrackedTaskDetails()
+          .then(details => {
+            if (details != null) {
+              this.trackedDetails = details;
+              this.secondsTicker = setInterval(() => {
+                this.secondsTracked = Math.floor((Date.now() - new Date(this.trackedDetails.entry.start)) / 1000);
+              }, 1000);
+            }
+          })
+          .catch(console.errorEvent);
+    },
+    onTaskStopped() {
+      clearInterval(this.secondsTicker);
+      this.trackedDetails = null;
+      this.secondsTracked = 0;
+    },
   },
   computed: {
     logString() {
@@ -84,18 +108,46 @@ export default {
     hasErrors() {
       return this.errors > 0;
     },
+    isTracking() {
+      return this.trackedDetails != null;
+    },
+    timeString() {
+      let now = Date.now();
+      let start = now - this.secondsTracked * 1000
+      return durationClock(start, now);
+    },
+    taskDetailsString() {
+      if (this.trackedDetails == null) {
+        return "";
+      }
+      return `[${this.timeString}] ${this.trackedDetails.task.name}`;
+    },
   },
   created() {
     LogEventName()
         .then(name => {
           EventsOn(name, this.onLogEventReceived)
         })
+    GetTrackedTaskDetails()
+        .then(details => {
+          if (details != null) {
+            this.trackedDetails = details;
+            this.secondsTracked = Math.floor((Date.now() - new Date(this.trackedDetails.entry.start)) / 1000);
+            this.secondsTicker = setInterval(() => {
+              this.secondsTracked = Math.floor((Date.now() - new Date(this.trackedDetails.entry.start)) / 1000);
+            }, 1000);
+          }
+        })
+        .catch(console.errorEvent);
+    EventsOn("taskStarted", this.onTaskStarted)
+    EventsOn("taskStopped", this.onTaskStopped)
   },
   destroyed() {
     LogEventName()
         .then(name => {
           EventsOff(name)
         })
+    this.onTaskStopped();
   }
 }
 </script>

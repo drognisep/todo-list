@@ -1,14 +1,16 @@
+// Package data provides base types and structure for data interactions.
+// This currently includes Task and TimeEntry data.
 package data
 
-type Task struct {
-	ID          uint64 `json:"id" boltholdKey:"ID"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Done        bool   `json:"done" boltholdIndex:"Done"`
-	Priority    int    `json:"priority" boltholdIndex:"Priority"`
-	Favorite    bool   `json:"favorite" boltholdIndex:"Favorite"`
-}
+import (
+	"errors"
+	"fmt"
+	"github.com/timshannon/bolthold"
+)
 
-type exportModel struct {
-	Tasks []Task `json:"tasks"`
+func translateNotFound(err error, id uint64) error {
+	if errors.Is(err, bolthold.ErrNotFound) {
+		return fmt.Errorf("%w: ID %d not found", ErrIDNotFound, id)
+	}
+	return err
 }
