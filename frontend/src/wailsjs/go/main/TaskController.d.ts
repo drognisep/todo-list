@@ -3,9 +3,13 @@
 import {data} from '../models';
 import {main} from '../models';
 
+export function AddNote(arg1:number,arg2:string):Promise<data.Note>;
+
 export function Count():Promise<number>;
 
 export function CreateTask(arg1:data.Task):Promise<data.Task>;
+
+export function DeleteNote(arg1:number):Promise<Error>;
 
 export function DeleteTask(arg1:number):Promise<Error>;
 
@@ -16,6 +20,10 @@ export function GetAllTasks():Promise<Array<data.Task>>;
 export function GetSummaryForEntries(arg1:Array<data.TimeEntry>):Promise<main.TimeEntrySummary>;
 
 export function GetTaskByID(arg1:number):Promise<data.Task>;
+
+export function GetTaskNoteCount(arg1:number):Promise<number>;
+
+export function GetTaskNotes(arg1:number):Promise<Array<data.Note>>;
 
 export function GetTimeEntriesForWeek():Promise<Array<data.TimeEntry>>;
 
@@ -28,5 +36,7 @@ export function Import(arg1:string):Promise<Error>;
 export function StartTask(arg1:number):Promise<Error>;
 
 export function StopTask():Promise<Error>;
+
+export function UpdateNote(arg1:number,arg2:string):Promise<data.Note>;
 
 export function UpdateTask(arg1:number,arg2:data.Task):Promise<data.Task>;

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/timshannon/bolthold"
 	"go.etcd.io/bbolt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -43,6 +44,26 @@ func (b *boltStorage) AddNote(id uint64, note Note) (Note, error) {
 	return note, nil
 }
 
+var _ sort.Interface = (noteSorter)(nil)
+
+type noteSorter []Note
+
+func (n noteSorter) Len() int {
+	return len(n)
+}
+
+func (n noteSorter) Less(i, j int) bool {
+	switch {
+	case n[i].Created.Before(n[j].Created):
+		return true
+	}
+	return false
+}
+
+func (n noteSorter) Swap(i, j int) {
+	n[i], n[j] = n[j], n[i]
+}
+
 func (b *boltStorage) GetTaskNotes(id uint64) ([]Note, error) {
 	var notes []Note
 	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {
@@ -60,6 +81,7 @@ func (b *boltStorage) GetTaskNotes(id uint64) ([]Note, error) {
 	if err != nil {
 		return nil, err
 	}
+	sort.Sort(noteSorter(notes))
 	return notes, nil
 }
 

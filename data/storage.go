@@ -106,6 +106,16 @@ type TaskStorage interface {
 	GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error)
 	// GetRunningTimeEntry returns the latest running time entry, if one exist.
 	GetRunningTimeEntry() (*TimeEntry, error)
+	// AddNote adds a Note to a Task identified by taskID.
+	AddNote(taskID uint64, note Note) (Note, error)
+	// GetTaskNotes gets a list of Note related to the Task identified by taskID.
+	GetTaskNotes(taskID uint64) ([]Note, error)
+	// GetTaskNoteCount gets the number of Note related to the TAsk identified by taskID.
+	GetTaskNoteCount(taskID uint64) (int, error)
+	// UpdateNote updates the text of the Note identified by noteID.
+	UpdateNote(noteID uint64, note Note) (Note, error)
+	// DeleteNote deletes a Note identified by noteID.
+	DeleteNote(noteID uint64) error
 }
 
 // Storage combines the existing persistence interfaces into one for convenience.

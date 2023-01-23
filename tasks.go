@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	TaskStartedEvent = "taskStarted"
-	TaskStoppedEvent = "taskStopped"
+	TaskStartedEvent  = "taskStarted"
+	TaskStoppedEvent  = "taskStopped"
+	NotesUpdatedEvent = "notesUpdated"
 )
 
 type TaskController struct {
@@ -271,6 +272,43 @@ func (c *TaskController) DeleteTask(id uint64) error {
 		return err
 	}
 	return nil
+}
+
+func (c *TaskController) GetTaskNotes(taskID uint64) ([]data.Note, error) {
+	c.log.DebugEvent("Received GetTaskNotes call", "id", taskID)
+	return c.store.GetTaskNotes(taskID)
+}
+
+func (c *TaskController) GetTaskNoteCount(taskID uint64) (int, error) {
+	c.log.DebugEvent("Received GetTaskNoteCount call", "id", taskID)
+	return c.store.GetTaskNoteCount(taskID)
+}
+
+func (c *TaskController) AddNote(taskID uint64, note string) (data.Note, error) {
+	c.log.DebugEvent("Received AddNote call", "id", taskID, "noteText", note)
+	addNote, err := c.store.AddNote(taskID, data.Note{Text: note})
+	if err == nil {
+		runtime.EventsEmit(c.ctx, NotesUpdatedEvent)
+	}
+	return addNote, err
+}
+
+func (c *TaskController) UpdateNote(noteID uint64, note string) (data.Note, error) {
+	c.log.DebugEvent("Received UpdateNote call", "id", noteID, "newText", note)
+	updateNote, err := c.store.UpdateNote(noteID, data.Note{Text: note})
+	if err == nil {
+		runtime.EventsEmit(c.ctx, NotesUpdatedEvent)
+	}
+	return updateNote, err
+}
+
+func (c *TaskController) DeleteNote(noteID uint64) error {
+	c.log.DebugEvent("Received DeleteNote call", "id", noteID)
+	err := c.store.DeleteNote(noteID)
+	if err == nil {
+		runtime.EventsEmit(c.ctx, NotesUpdatedEvent)
+	}
+	return err
 }
 
 func (c *TaskController) Export() (string, error) {
