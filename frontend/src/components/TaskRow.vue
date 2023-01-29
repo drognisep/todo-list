@@ -9,6 +9,7 @@
     <div class="actions">
       <span :title="$props.task.done ? 'Reopen' : 'Complete'" class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
       <span title="Pin" :class="['material-icons','favorite',$props.task.favorite ? 'favored' : '']" @click="taskFavorite">push_pin</span>
+      <span title="Notes" class="material-icons notes" @click="toggleShowNotes">comment</span>
       <span title="Delete" class="material-icons delete" @click="deleteTask">delete</span>
       <span :title="trackingTitle" class="material-icons" @click="toggleTracking">{{trackingLigature}}</span>
     </div>
@@ -18,6 +19,12 @@
         @dialogClosed="toggleShowUpdate"
         @taskUpdated="submitUpdate"
     />
+    <NotesModal
+        v-show="showNotes"
+        :task-id="task.id"
+        :task-name="task.name"
+        @dialogClosed="toggleShowNotes"
+    />
   </div>
 </template>
 
@@ -25,13 +32,14 @@
 import Modal from "./Modal.vue";
 import TaskModal from "./TaskModal.vue";
 import {StartTask, StopTask} from "../wailsjs/go/main/TaskController.js";
+import NotesModal from "./NotesModal.vue";
 
 const descLimit = 50;
 const nameLimit = 50;
 
 export default {
   name: "TaskRow",
-  components: {Modal, TaskModal},
+  components: {NotesModal, Modal, TaskModal},
   emits: ["taskDeleted", "taskUpdate"],
   props: {
     task: Object,
@@ -40,6 +48,7 @@ export default {
   data() {
     return {
       showUpdate: false,
+      showNotes: false,
     }
   },
   methods: {
@@ -56,6 +65,9 @@ export default {
     },
     toggleShowUpdate() {
       this.showUpdate = !this.showUpdate;
+    },
+    toggleShowNotes() {
+      this.showNotes = !this.showNotes;
     },
     submitUpdate(state) {
       this.$emit("taskUpdate", state);

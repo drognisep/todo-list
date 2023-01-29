@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"os"
 	"time"
 	"todo-list/eventlog"
@@ -60,6 +61,9 @@ func main() {
 			app,
 			logger,
 			tasks,
+		},
+		Windows: &windows.Options{
+			Theme: windows.Dark,
 		},
 	})
 
