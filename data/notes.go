@@ -64,6 +64,18 @@ func (n noteSorter) Swap(i, j int) {
 	n[i], n[j] = n[j], n[i]
 }
 
+func (b *boltStorage) getAllNotes() ([]Note, error) {
+	var notes []Note
+	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {
+		return b.store.TxFind(tx, &notes, nil)
+	})
+	if err != nil {
+		return nil, err
+	}
+	sort.Sort(noteSorter(notes))
+	return notes, nil
+}
+
 func (b *boltStorage) GetTaskNotes(id uint64) ([]Note, error) {
 	var notes []Note
 	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {

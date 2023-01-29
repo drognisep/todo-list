@@ -42,7 +42,11 @@ func (b *boltStorage) Export(dir string) (outName string, err error) {
 	if err != nil {
 		return "", err
 	}
-	err = writer.Encode(exportModel{Tasks: tasks, TimeEntries: entries})
+	notes, err := b.getAllNotes()
+	if err != nil {
+		return "", err
+	}
+	err = writer.Encode(exportModel{Tasks: tasks, TimeEntries: entries, Notes: notes})
 	if err != nil {
 		return
 	}
@@ -147,10 +151,46 @@ func (b *boltStorage) Import(file string, merge MergeStrategy) (err error) {
 			}
 		},
 	}
+
+	noteEntrySet := &importSet[Note]{
+		records: model.Notes,
+		getID: func(e Note) uint64 {
+			return e.ID
+		},
+		resetID: func(e *Note) {
+			e.ID = 0
+		},
+		normalizeImport: func(e *Note) {
+			if e.TaskID != nil {
+				id := taskSet.appendMap.mapID(*e.TaskID)
+				e.TaskID = &id
+			}
+		},
+		validateImport: func(e Note) error {
+			if e.TaskID != nil {
+				count, err := b.store.TxCount(tx, Task{}, bolthold.Where(bolthold.Key).Eq(*e.TaskID))
+				switch {
+				case err != nil:
+					return err
+				case count > 1:
+					return ErrAmbiguousID
+				case count == 0:
+					return fmt.Errorf("%w: referenced Task ID '%d' does not exist", ErrIDNotFound, *e.TaskID)
+				default:
+					return nil
+				}
+			}
+			return nil
+		},
+	}
+
 	if err := importRecords(b, tx, taskSet, merge); err != nil {
 		return rollback(err)
 	}
 	if err := importRecords(b, tx, timeEntrySet, merge); err != nil {
+		return rollback(err)
+	}
+	if err := importRecords(b, tx, noteEntrySet, merge); err != nil {
 		return rollback(err)
 	}
 
