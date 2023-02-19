@@ -24,14 +24,14 @@ func TestBoltStorage_Create(t *testing.T) {
 		Name: "Some name",
 	}
 
-	created, err := tstore.Create(newTask)
+	created, err := tstore.CreateTask(newTask)
 	assert.NoError(t, err)
 	assert.NotEqual(t, created, newTask)
 
 	newTask.ID = created.ID
 	assert.Equal(t, created, newTask)
 
-	tasks, err := tstore.Get()
+	tasks, err := tstore.GetTasks()
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 1)
 	assert.Equal(t, created, tasks[0])
@@ -41,7 +41,7 @@ func TestBoltStorage_Delete(t *testing.T) {
 	tstore, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	tasks, err := tstore.Get()
+	tasks, err := tstore.GetTasks()
 	assert.NoError(t, err)
 	assert.Empty(t, tasks)
 
@@ -49,17 +49,17 @@ func TestBoltStorage_Delete(t *testing.T) {
 		Name: "Some name",
 	}
 
-	created, err := tstore.Create(newTask)
+	created, err := tstore.CreateTask(newTask)
 	assert.NoError(t, err)
 
-	tasks, err = tstore.Get()
+	tasks, err = tstore.GetTasks()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tasks)
 
-	err = tstore.Delete(created.ID)
+	err = tstore.DeleteTask(created.ID)
 	assert.NoError(t, err)
 
-	tasks, err = tstore.Get()
+	tasks, err = tstore.GetTasks()
 	assert.NoError(t, err)
 	assert.Empty(t, tasks)
 }
@@ -72,22 +72,22 @@ func TestBoltStorage_Update(t *testing.T) {
 		Name: "Some name",
 	}
 
-	created, err := tstore.Create(newTask)
+	created, err := tstore.CreateTask(newTask)
 	assert.NoError(t, err)
 	assert.NotEqual(t, created, newTask)
 
 	created.Name = "New name"
 
-	tasks, err := tstore.Get()
+	tasks, err := tstore.GetTasks()
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 1)
 	assert.NotEqual(t, created.Name, tasks[0].Name)
 
-	updated, err := tstore.Update(created.ID, created)
+	updated, err := tstore.UpdateTask(created.ID, created)
 	assert.NoError(t, err)
 	assert.Equal(t, created, updated)
 
-	tasks, err = tstore.Get()
+	tasks, err = tstore.GetTasks()
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 1)
 	assert.Equal(t, created.Name, tasks[0].Name)
@@ -102,18 +102,18 @@ func TestBoltStorage_Get_WithID(t *testing.T) {
 	}
 
 	var err error
-	_, err = tstore.Create(newTask)
+	_, err = tstore.CreateTask(newTask)
 	assert.NoError(t, err)
-	_, err = tstore.Create(newTask)
+	_, err = tstore.CreateTask(newTask)
 	assert.NoError(t, err)
-	_, err = tstore.Create(newTask)
+	_, err = tstore.CreateTask(newTask)
 	assert.NoError(t, err)
 
-	count, err := tstore.Count()
+	count, err := tstore.CountTasks()
 	assert.NoError(t, err)
 	assert.Equal(t, 3, count)
 
-	tasks, err := tstore.Get(WithID(1))
+	tasks, err := tstore.GetTasks(WithID(1))
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 1)
 	assert.Equal(t, uint64(1), tasks[0].ID)
@@ -125,7 +125,7 @@ func TestBoltStorage_StartTimeEntry(t *testing.T) {
 
 	var err error
 	task := Task{Name: "First Task"}
-	task, err = store.Create(task)
+	task, err = store.CreateTask(task)
 	assert.NoError(t, err)
 
 	entry, err := store.StartTimeEntry(task.ID)
@@ -140,7 +140,7 @@ func TestBoltStorage_StopTimeEntry(t *testing.T) {
 
 	var err error
 	task := Task{Name: "First Task"}
-	task, err = store.Create(task)
+	task, err = store.CreateTask(task)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), task.ID)
 
@@ -160,7 +160,7 @@ func TestBoltStorage_StartAfterStop(t *testing.T) {
 
 	var err error
 	task := Task{Name: "First Task"}
-	task, err = store.Create(task)
+	task, err = store.CreateTask(task)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), task.ID)
 
@@ -184,7 +184,7 @@ func TestBoltStorage_GetRunningTimeEntry(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	created, err := store.Create(Task{
+	created, err := store.CreateTask(Task{
 		Name: "A task",
 	})
 	assert.NoError(t, err)
@@ -205,7 +205,7 @@ func TestBoltStorage_GetTimeEntries_After(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	created, err := store.Create(Task{
+	created, err := store.CreateTask(Task{
 		Name: "Task",
 	})
 	require.NoError(t, err)
@@ -224,7 +224,7 @@ func TestBoltStorage_GetTimeEntries_EntriesToday(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	created, err := store.Create(Task{
+	created, err := store.CreateTask(Task{
 		Name: "Task",
 	})
 	require.NoError(t, err)

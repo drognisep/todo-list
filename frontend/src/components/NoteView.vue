@@ -26,7 +26,7 @@ export default {
     },
     stopEdit() {
       this.editing = false;
-      if (this.node.text.length === 0) {
+      if (this.note.text.length === 0) {
         UpdateNote(this.note.id, this.note.text)
             .catch(console.errorEvent);
       }

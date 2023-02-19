@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	TaskStartedEvent  = "taskStarted"
-	TaskStoppedEvent  = "taskStopped"
-	NotesUpdatedEvent = "notesUpdated"
+	TaskStartedEvent    = "taskStarted"
+	TaskStoppedEvent    = "taskStopped"
+	NotesUpdatedEvent   = "notesUpdated"
+	EntriesUpdatedEvent = "entriesChanged"
 )
 
 type ModelController struct {
@@ -108,7 +109,7 @@ func (c *ModelController) calculateSummary(entries []data.TimeEntry) (*TimeEntry
 			continue
 		}
 		if _, ok := taskSummary[e.TaskID]; !ok {
-			tasks, err := c.store.GetHistoric(data.WithID(e.TaskID))
+			tasks, err := c.store.GetHistoricTasks(data.WithID(e.TaskID))
 			if err != nil {
 				return nil, err
 			}
@@ -163,7 +164,7 @@ func (c *ModelController) GetTrackedTaskDetails() (*TrackedTaskDetails, error) {
 	if c.activeTimeEntry == nil {
 		return nil, nil
 	}
-	tasks, err := c.store.Get(data.WithID(c.activeTimeEntry.TaskID))
+	tasks, err := c.store.GetTasks(data.WithID(c.activeTimeEntry.TaskID))
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +222,7 @@ func (c *ModelController) StopTask() error {
 
 func (c *ModelController) GetTaskByID(id uint64) (data.Task, error) {
 	c.log.DebugEvent("Received GetTasksByID call", "id", id)
-	tasks, err := c.store.GetHistoric(data.WithID(id))
+	tasks, err := c.store.GetHistoricTasks(data.WithID(id))
 	if err != nil {
 		if errors.Is(err, bolthold.ErrNotFound) {
 			return data.Task{}, fmt.Errorf("%w: %v", data.ErrIDNotFound, err)
@@ -236,7 +237,7 @@ func (c *ModelController) GetTaskByID(id uint64) (data.Task, error) {
 
 func (c *ModelController) GetAllTasks() ([]data.Task, error) {
 	c.log.DebugEvent("Received GetAllTasks call")
-	tasks, err := c.store.Get()
+	tasks, err := c.store.GetTasks()
 	if err != nil {
 		return nil, err
 	}
@@ -244,13 +245,13 @@ func (c *ModelController) GetAllTasks() ([]data.Task, error) {
 }
 
 func (c *ModelController) Count() (int, error) {
-	c.log.DebugEvent("Received Count call")
-	return c.store.Count()
+	c.log.DebugEvent("Received CountTasks call")
+	return c.store.CountTasks()
 }
 
 func (c *ModelController) CreateTask(task data.Task) (data.Task, error) {
 	c.log.DebugEvent("Received CreateTask call", "toCreate", task)
-	created, err := c.store.Create(task)
+	created, err := c.store.CreateTask(task)
 	if err != nil {
 		return data.Task{}, err
 	}
@@ -259,7 +260,7 @@ func (c *ModelController) CreateTask(task data.Task) (data.Task, error) {
 
 func (c *ModelController) UpdateTask(id uint64, task data.Task) (data.Task, error) {
 	c.log.DebugEvent("Received UpdateTask call", "id", id, "task", task)
-	updated, err := c.store.Update(id, task)
+	updated, err := c.store.UpdateTask(id, task)
 	if err != nil {
 		return data.Task{}, err
 	}
@@ -268,7 +269,7 @@ func (c *ModelController) UpdateTask(id uint64, task data.Task) (data.Task, erro
 
 func (c *ModelController) DeleteTask(id uint64) error {
 	c.log.DebugEvent("Received DeleteTask call", "id", id)
-	if err := c.store.Delete(id); err != nil {
+	if err := c.store.DeleteTask(id); err != nil {
 		return err
 	}
 	return nil

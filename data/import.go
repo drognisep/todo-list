@@ -34,7 +34,7 @@ func (b *boltStorage) Export(dir string) (outName string, err error) {
 
 	writer := json.NewEncoder(out)
 
-	tasks, err := b.GetHistoric()
+	tasks, err := b.GetHistoricTasks()
 	if err != nil {
 		return "", err
 	}

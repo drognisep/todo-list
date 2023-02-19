@@ -65,12 +65,12 @@ func (t *taskSorter) Swap(i, j int) {
 	t.tasks[i], t.tasks[j] = t.tasks[j], t.tasks[i]
 }
 
-func (b *boltStorage) Get(filters ...TaskFilter) ([]Task, error) {
+func (b *boltStorage) GetTasks(filters ...TaskFilter) ([]Task, error) {
 	query := bolthold.Where("SoftDeleted").Eq(false)
 	return b.getTasks(query, filters)
 }
 
-func (b *boltStorage) GetHistoric(filters ...TaskFilter) ([]Task, error) {
+func (b *boltStorage) GetHistoricTasks(filters ...TaskFilter) ([]Task, error) {
 	query := new(bolthold.Query)
 	return b.getTasks(query, filters)
 }
@@ -94,7 +94,7 @@ func (b *boltStorage) getTasks(query *bolthold.Query, filters []TaskFilter) ([]T
 	return found, nil
 }
 
-func (b *boltStorage) Count() (int, error) {
+func (b *boltStorage) CountTasks() (int, error) {
 	var count int
 	err := b.store.Bolt().View(func(tx *bbolt.Tx) error {
 		var err error
@@ -110,7 +110,7 @@ func (b *boltStorage) Count() (int, error) {
 	return count, nil
 }
 
-func (b *boltStorage) Create(task Task) (Task, error) {
+func (b *boltStorage) CreateTask(task Task) (Task, error) {
 	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
 		if err := b.store.TxInsert(tx, bolthold.NextSequence(), &task); err != nil {
 			return err
@@ -123,7 +123,7 @@ func (b *boltStorage) Create(task Task) (Task, error) {
 	return task, nil
 }
 
-func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
+func (b *boltStorage) UpdateTask(id uint64, task Task) (Task, error) {
 	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
 		return b.store.TxUpdate(tx, id, &task)
 	})
@@ -136,7 +136,7 @@ func (b *boltStorage) Update(id uint64, task Task) (Task, error) {
 	return task, nil
 }
 
-func (b *boltStorage) Delete(id uint64) error {
+func (b *boltStorage) DeleteTask(id uint64) error {
 	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
 		task := new(Task)
 		if err := b.store.TxFindOne(tx, task, bolthold.Where(bolthold.Key).Eq(id)); err != nil {

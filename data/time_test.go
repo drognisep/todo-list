@@ -40,7 +40,7 @@ func TestBoltStorage_UpdateTimeEntry(t *testing.T) {
 		Name: "sometask",
 	}
 	var err error
-	task, err = store.Create(task)
+	task, err = store.CreateTask(task)
 	require.NoError(t, err)
 
 	entry, err := store.StartTimeEntry(task.ID)

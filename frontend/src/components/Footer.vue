@@ -141,6 +141,10 @@ export default {
         .catch(console.errorEvent);
     EventsOn("taskStarted", this.onTaskStarted)
     EventsOn("taskStopped", this.onTaskStopped)
+    EventsOn("entriesChanged", () => {
+      this.onTaskStopped();
+      this.onTaskStarted();
+    })
   },
   destroyed() {
     LogEventName()
