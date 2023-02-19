@@ -2,6 +2,7 @@ package data
 
 import (
 	"errors"
+	"fmt"
 	"github.com/timshannon/bolthold"
 	"go.etcd.io/bbolt"
 	"time"
@@ -93,6 +94,23 @@ func (b *boltStorage) StartAfterStop(startTaskID uint64, stopEntryID uint64) (Ti
 	return entry, err
 }
 
+func entryID(id uint64) TimeEntryFilter {
+	return func(query *bolthold.Query) {
+		query.And(bolthold.Key).Eq(id)
+	}
+}
+
+func (b *boltStorage) GetTimeEntry(id uint64) (TimeEntry, error) {
+	entries, err := b.GetTimeEntries(entryID(id))
+	if err != nil {
+		return TimeEntry{}, err
+	}
+	if len(entries) == 0 {
+		return TimeEntry{}, fmt.Errorf("%w: %v", ErrIDNotFound, err)
+	}
+	return entries[0], nil
+}
+
 func (b *boltStorage) GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error) {
 	var entries []TimeEntry
 	query := new(bolthold.Query)
@@ -129,4 +147,28 @@ func (b *boltStorage) GetRunningTimeEntry() (*TimeEntry, error) {
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (b *boltStorage) UpdateTimeEntry(id uint64, newState TimeEntry) (TimeEntry, error) {
+	var current TimeEntry
+	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
+		err := b.store.TxFindOne(tx, &current, bolthold.Where(bolthold.Key).Eq(id))
+		if err != nil {
+			return err
+		}
+		current.Start = newState.Start
+		if newState.End != nil {
+			current.End = newState.End
+		}
+		current.Synced = false
+
+		if err = b.store.TxUpdate(tx, id, &current); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return TimeEntry{}, err
+	}
+	return current, nil
 }
