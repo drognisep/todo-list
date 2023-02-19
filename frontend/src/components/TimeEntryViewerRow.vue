@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import {GetTaskByID} from "../wailsjs/go/main/TaskController.js";
+import {GetTaskByID} from "../wailsjs/go/main/ModelController.js";
 import {durationGo, formatClockTime, weekdaySemantic} from "../datetime.js";
 import loadState from "../loadState.js";
 

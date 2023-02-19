@@ -13,12 +13,12 @@ import (
 // App struct
 type App struct {
 	ctx    context.Context
-	tasks  *TaskController
+	tasks  *ModelController
 	logger *eventlog.EventLog
 }
 
 // NewApp creates a new App application struct
-func NewApp(logger *eventlog.EventLog, tasks *TaskController) *App {
+func NewApp(logger *eventlog.EventLog, tasks *ModelController) *App {
 	return &App{
 		tasks:  tasks,
 		logger: logger,

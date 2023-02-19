@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import {Count, GetTimeEntriesForWeek, GetTimeEntriesToday} from "../wailsjs/go/main/TaskController.js";
+import {Count, GetTimeEntriesForWeek, GetTimeEntriesToday} from "../wailsjs/go/main/ModelController.js";
 import Loading from "../components/Loading.vue";
 import loading from "../loadState.js";
 import TimeEntryViewer from "../components/TimeEntryViewer.vue";

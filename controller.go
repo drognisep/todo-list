@@ -20,7 +20,7 @@ const (
 	NotesUpdatedEvent = "notesUpdated"
 )
 
-type TaskController struct {
+type ModelController struct {
 	ctx   context.Context
 	store data.TaskStorage
 	log   *eventlog.EventLog
@@ -29,18 +29,18 @@ type TaskController struct {
 	activeTimeEntry *data.TimeEntry
 }
 
-func NewTaskController(logger *eventlog.EventLog) (*TaskController, error) {
+func NewTaskController(logger *eventlog.EventLog) (*ModelController, error) {
 	store, err := data.NewStorage()
 	if err != nil {
 		return nil, err
 	}
-	return &TaskController{
+	return &ModelController{
 		store: store,
 		log:   logger,
 	}, nil
 }
 
-func (c *TaskController) onStartup(ctx context.Context) error {
+func (c *ModelController) onStartup(ctx context.Context) error {
 	c.ctx = ctx
 	entry, err := c.store.GetRunningTimeEntry()
 	if err != nil {
@@ -54,7 +54,7 @@ func (c *TaskController) onStartup(ctx context.Context) error {
 	return nil
 }
 
-func (c *TaskController) GetTimeEntriesToday() ([]data.TimeEntry, error) {
+func (c *ModelController) GetTimeEntriesToday() ([]data.TimeEntry, error) {
 	return c.store.GetTimeEntries(data.EntriesToday())
 }
 
@@ -83,15 +83,15 @@ type TaskSummary struct {
 	totalDur time.Duration
 }
 
-func (c *TaskController) GetTimeEntriesForWeek() ([]data.TimeEntry, error) {
+func (c *ModelController) GetTimeEntriesForWeek() ([]data.TimeEntry, error) {
 	return c.store.GetTimeEntries(data.SinceWeekday(time.Sunday))
 }
 
-func (c *TaskController) GetSummaryForEntries(entries []data.TimeEntry) (*TimeEntrySummary, error) {
+func (c *ModelController) GetSummaryForEntries(entries []data.TimeEntry) (*TimeEntrySummary, error) {
 	return c.calculateSummary(entries)
 }
 
-func (c *TaskController) calculateSummary(entries []data.TimeEntry) (*TimeEntrySummary, error) {
+func (c *ModelController) calculateSummary(entries []data.TimeEntry) (*TimeEntrySummary, error) {
 	if len(entries) == 0 {
 		return &TimeEntrySummary{}, nil
 	}
@@ -159,7 +159,7 @@ type TrackedTaskDetails struct {
 	Entry data.TimeEntry `json:"entry"`
 }
 
-func (c *TaskController) GetTrackedTaskDetails() (*TrackedTaskDetails, error) {
+func (c *ModelController) GetTrackedTaskDetails() (*TrackedTaskDetails, error) {
 	if c.activeTimeEntry == nil {
 		return nil, nil
 	}
@@ -176,7 +176,7 @@ func (c *TaskController) GetTrackedTaskDetails() (*TrackedTaskDetails, error) {
 	}, nil
 }
 
-func (c *TaskController) StartTask(taskID uint64) error {
+func (c *ModelController) StartTask(taskID uint64) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
@@ -201,7 +201,7 @@ func (c *TaskController) StartTask(taskID uint64) error {
 	return nil
 }
 
-func (c *TaskController) StopTask() error {
+func (c *ModelController) StopTask() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
@@ -219,7 +219,7 @@ func (c *TaskController) StopTask() error {
 	return err
 }
 
-func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
+func (c *ModelController) GetTaskByID(id uint64) (data.Task, error) {
 	c.log.DebugEvent("Received GetTasksByID call", "id", id)
 	tasks, err := c.store.GetHistoric(data.WithID(id))
 	if err != nil {
@@ -234,7 +234,7 @@ func (c *TaskController) GetTaskByID(id uint64) (data.Task, error) {
 	return tasks[0], nil
 }
 
-func (c *TaskController) GetAllTasks() ([]data.Task, error) {
+func (c *ModelController) GetAllTasks() ([]data.Task, error) {
 	c.log.DebugEvent("Received GetAllTasks call")
 	tasks, err := c.store.Get()
 	if err != nil {
@@ -243,12 +243,12 @@ func (c *TaskController) GetAllTasks() ([]data.Task, error) {
 	return tasks, nil
 }
 
-func (c *TaskController) Count() (int, error) {
+func (c *ModelController) Count() (int, error) {
 	c.log.DebugEvent("Received Count call")
 	return c.store.Count()
 }
 
-func (c *TaskController) CreateTask(task data.Task) (data.Task, error) {
+func (c *ModelController) CreateTask(task data.Task) (data.Task, error) {
 	c.log.DebugEvent("Received CreateTask call", "toCreate", task)
 	created, err := c.store.Create(task)
 	if err != nil {
@@ -257,7 +257,7 @@ func (c *TaskController) CreateTask(task data.Task) (data.Task, error) {
 	return created, nil
 }
 
-func (c *TaskController) UpdateTask(id uint64, task data.Task) (data.Task, error) {
+func (c *ModelController) UpdateTask(id uint64, task data.Task) (data.Task, error) {
 	c.log.DebugEvent("Received UpdateTask call", "id", id, "task", task)
 	updated, err := c.store.Update(id, task)
 	if err != nil {
@@ -266,7 +266,7 @@ func (c *TaskController) UpdateTask(id uint64, task data.Task) (data.Task, error
 	return updated, nil
 }
 
-func (c *TaskController) DeleteTask(id uint64) error {
+func (c *ModelController) DeleteTask(id uint64) error {
 	c.log.DebugEvent("Received DeleteTask call", "id", id)
 	if err := c.store.Delete(id); err != nil {
 		return err
@@ -274,17 +274,17 @@ func (c *TaskController) DeleteTask(id uint64) error {
 	return nil
 }
 
-func (c *TaskController) GetTaskNotes(taskID uint64) ([]data.Note, error) {
+func (c *ModelController) GetTaskNotes(taskID uint64) ([]data.Note, error) {
 	c.log.DebugEvent("Received GetTaskNotes call", "id", taskID)
 	return c.store.GetTaskNotes(taskID)
 }
 
-func (c *TaskController) GetTaskNoteCount(taskID uint64) (int, error) {
+func (c *ModelController) GetTaskNoteCount(taskID uint64) (int, error) {
 	c.log.DebugEvent("Received GetTaskNoteCount call", "id", taskID)
 	return c.store.GetTaskNoteCount(taskID)
 }
 
-func (c *TaskController) AddNote(taskID uint64, note string) (data.Note, error) {
+func (c *ModelController) AddNote(taskID uint64, note string) (data.Note, error) {
 	c.log.DebugEvent("Received AddNote call", "id", taskID, "noteText", note)
 	addNote, err := c.store.AddNote(taskID, data.Note{Text: note})
 	if err == nil {
@@ -293,7 +293,7 @@ func (c *TaskController) AddNote(taskID uint64, note string) (data.Note, error) 
 	return addNote, err
 }
 
-func (c *TaskController) UpdateNote(noteID uint64, note string) (data.Note, error) {
+func (c *ModelController) UpdateNote(noteID uint64, note string) (data.Note, error) {
 	c.log.DebugEvent("Received UpdateNote call", "id", noteID, "newText", note)
 	updateNote, err := c.store.UpdateNote(noteID, data.Note{Text: note})
 	if err == nil {
@@ -302,7 +302,7 @@ func (c *TaskController) UpdateNote(noteID uint64, note string) (data.Note, erro
 	return updateNote, err
 }
 
-func (c *TaskController) DeleteNote(noteID uint64) error {
+func (c *ModelController) DeleteNote(noteID uint64) error {
 	c.log.DebugEvent("Received DeleteNote call", "id", noteID)
 	err := c.store.DeleteNote(noteID)
 	if err == nil {
@@ -311,7 +311,7 @@ func (c *TaskController) DeleteNote(noteID uint64) error {
 	return err
 }
 
-func (c *TaskController) Export() (string, error) {
+func (c *ModelController) Export() (string, error) {
 	c.log.DebugEvent("Received Export call")
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -332,7 +332,7 @@ func (c *TaskController) Export() (string, error) {
 	return c.store.Export(dir)
 }
 
-func (c *TaskController) Import(strategy string) error {
+func (c *ModelController) Import(strategy string) error {
 	c.log.DebugEvent("Received Import call")
 	home, err := os.UserHomeDir()
 	if err != nil {

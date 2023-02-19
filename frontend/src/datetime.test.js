@@ -7,8 +7,10 @@ const hour = minute * 60;
 
 test('Duration clock should round', () => {
     let start = Date.now();
-    let end = start + 900;
+    let end = start + 400;
     expect(durationClock(start, end)).eq("00:00:00");
+    end = start + 500;
+    expect(durationClock(start, end)).eq("00:00:01");
 })
 
 test('Duration is able to handle a missing end date by reporting 0 duration', () => {

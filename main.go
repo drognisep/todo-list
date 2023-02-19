@@ -22,7 +22,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	loadedCh := make(chan error)
-	var tasks *TaskController
+	var tasks *ModelController
 
 	go func() {
 		var err error

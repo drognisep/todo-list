@@ -24,7 +24,7 @@
 <script>
 import {EventsOff, EventsOn} from "../wailsjs/runtime/runtime.js";
 import {LogEventName} from "../wailsjs/go/eventlog/EventLog.js";
-import {GetTrackedTaskDetails} from "../wailsjs/go/main/TaskController.js";
+import {GetTrackedTaskDetails} from "../wailsjs/go/main/ModelController.js";
 import Modal from "./Modal.vue";
 import {durationClock} from "../datetime.js";
 

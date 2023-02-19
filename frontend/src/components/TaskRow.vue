@@ -31,7 +31,7 @@
 <script>
 import Modal from "./Modal.vue";
 import TaskModal from "./TaskModal.vue";
-import {StartTask, StopTask} from "../wailsjs/go/main/TaskController.js";
+import {StartTask, StopTask} from "../wailsjs/go/main/ModelController.js";
 import NotesModal from "./NotesModal.vue";
 
 const descLimit = 50;

@@ -20,7 +20,7 @@
 
 <script>
 import {RouterLink} from 'vue-router';
-import {Import, Export} from "../wailsjs/go/main/TaskController.js";
+import {Import, Export} from "../wailsjs/go/main/ModelController.js";
 import ImportDialog from "./ImportDialog.vue";
 
 export default {

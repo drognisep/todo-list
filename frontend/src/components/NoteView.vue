@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import {DeleteNote, UpdateNote} from "../wailsjs/go/main/TaskController.js";
+import {DeleteNote, UpdateNote} from "../wailsjs/go/main/ModelController.js";
 
 export default {
   name: "NoteView",
