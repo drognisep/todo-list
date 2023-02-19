@@ -11,8 +11,8 @@ import (
 type TimeEntry struct {
 	ID     uint64     `json:"id" boltholdKey:"ID"`
 	TaskID uint64     `json:"taskID" boltholdIndex:"TaskID"`
-	Start  time.Time  `json:"start" boltholdIndex:"Start"`
-	End    *time.Time `json:"end"`
+	Start  time.Time  `json:"start" boltholdIndex:"Start" ts_type:"Date" ts_transform:"new Date(__VALUE__)"`
+	End    *time.Time `json:"end" ts_type:"Date" ts_transform:"new Date(__VALUE__)"`
 	Synced bool       `json:"synced" boltholdIndex:"Synced"`
 }
 
@@ -171,4 +171,18 @@ func (b *boltStorage) UpdateTimeEntry(id uint64, newState TimeEntry) (TimeEntry,
 		return TimeEntry{}, err
 	}
 	return current, nil
+}
+
+func (b *boltStorage) DeleteTimeEntry(id uint64) error {
+	err := b.store.Bolt().Update(func(tx *bbolt.Tx) error {
+		err := b.store.Delete(id, &TimeEntry{})
+		if errors.Is(err, bolthold.ErrNotFound) {
+			return nil
+		}
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

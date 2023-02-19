@@ -21,6 +21,10 @@ const (
 	EntriesUpdatedEvent = "entriesChanged"
 )
 
+var (
+	ErrInvalidEntry = errors.New("invalid time entry")
+)
+
 type ModelController struct {
 	ctx   context.Context
 	store data.TaskStorage
@@ -90,6 +94,34 @@ func (c *ModelController) GetTimeEntriesForWeek() ([]data.TimeEntry, error) {
 
 func (c *ModelController) GetSummaryForEntries(entries []data.TimeEntry) (*TimeEntrySummary, error) {
 	return c.calculateSummary(entries)
+}
+
+func (c *ModelController) UpdateTimeEntry(id uint64, newState data.TimeEntry) (data.TimeEntry, error) {
+	var empty data.TimeEntry
+	if newState.Start.After(time.Now()) {
+		c.log.ErrorEvent("Start time after now")
+		return empty, fmt.Errorf("%w: start time after now", ErrInvalidEntry)
+	}
+	if newState.End != nil {
+		if newState.End.After(time.Now()) {
+			c.log.ErrorEvent("End time after now")
+			return empty, fmt.Errorf("%w: end time after now", ErrInvalidEntry)
+		}
+		if newState.Start.After(*newState.End) {
+			c.log.ErrorEvent("Start is after end")
+			return empty, fmt.Errorf("%w: start time after end", ErrInvalidEntry)
+		}
+	}
+	updated, err := c.store.UpdateTimeEntry(id, newState)
+	if err != nil {
+		return empty, err
+	}
+	runtime.EventsEmit(c.ctx, EntriesUpdatedEvent)
+	return updated, nil
+}
+
+func (c *ModelController) DeleteTimeEntry(id uint64) error {
+	return c.store.DeleteTimeEntry(id)
 }
 
 func (c *ModelController) calculateSummary(entries []data.TimeEntry) (*TimeEntrySummary, error) {

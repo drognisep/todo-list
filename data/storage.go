@@ -106,6 +106,10 @@ type TaskStorage interface {
 	GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error)
 	// GetRunningTimeEntry returns the latest running time entry, if one exist.
 	GetRunningTimeEntry() (*TimeEntry, error)
+	// UpdateTimeEntry allows changing a time entry after it has been created.
+	UpdateTimeEntry(id uint64, newState TimeEntry) (TimeEntry, error)
+	// DeleteTimeEntry deletes the TimeEntry from the store.
+	DeleteTimeEntry(id uint64) error
 	// AddNote adds a Note to a Task identified by taskID.
 	AddNote(taskID uint64, note Note) (Note, error)
 	// GetTaskNotes gets a list of Note related to the Task identified by taskID.

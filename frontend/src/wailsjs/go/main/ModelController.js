@@ -22,6 +22,10 @@ export function DeleteTask(arg1) {
   return window['go']['main']['ModelController']['DeleteTask'](arg1);
 }
 
+export function DeleteTimeEntry(arg1) {
+  return window['go']['main']['ModelController']['DeleteTimeEntry'](arg1);
+}
+
 export function Export() {
   return window['go']['main']['ModelController']['Export']();
 }
@@ -76,4 +80,8 @@ export function UpdateNote(arg1, arg2) {
 
 export function UpdateTask(arg1, arg2) {
   return window['go']['main']['ModelController']['UpdateTask'](arg1, arg2);
+}
+
+export function UpdateTimeEntry(arg1, arg2) {
+  return window['go']['main']['ModelController']['UpdateTimeEntry'](arg1, arg2);
 }
