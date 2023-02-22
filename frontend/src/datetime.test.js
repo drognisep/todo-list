@@ -1,5 +1,5 @@
 import {expect, test} from "vitest";
-import {durationClock, durationGo, formatClockTime, weekday, weekdaySemantic} from "./datetime.js";
+import {durationClock, durationGo, formatClockTime, weekday, weekdaySemantic, parseDurationClock} from "./datetime.js";
 
 const second = 1000;
 const minute = second * 60;
@@ -7,8 +7,10 @@ const hour = minute * 60;
 
 test('Duration clock should round', () => {
     let start = Date.now();
-    let end = start + 900;
+    let end = start + 400;
     expect(durationClock(start, end)).eq("00:00:00");
+    end = start + 500;
+    expect(durationClock(start, end)).eq("00:00:01");
 })
 
 test('Duration is able to handle a missing end date by reporting 0 duration', () => {
@@ -75,4 +77,16 @@ test('Weekday semantic should identify yesterday, today, and tomorrow', () => {
 test('Format clock time should work as expected', () => {
     let date = new Date(2023, 0, 3, 1, 2, 3, 100);
     expect(formatClockTime(date)).eq('01:02:03');
+})
+
+test('Parsed clock time works as expected', () => {
+    let given = "01:02:03"
+    let val = parseDurationClock(given);
+    expect(val).eq(hour + 2 * minute + 3 * second);
+})
+
+test('Parsed clock time works without seconds', () => {
+    let given = "01:02"
+    let val = parseDurationClock(given);
+    expect(val).eq(hour + 2 * minute);
 })

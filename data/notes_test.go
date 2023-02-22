@@ -11,7 +11,7 @@ func TestAddNoteToTask(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	created, err := store.Create(Task{Name: "Task with notes"})
+	created, err := store.CreateTask(Task{Name: "Task with notes"})
 	require.NoError(t, err)
 
 	var newNote Note
@@ -47,7 +47,7 @@ func TestAddNoteToTask_Neg(t *testing.T) {
 			store, cleanup := _newBoltStore(t)
 			defer cleanup()
 
-			newTask, err := store.Create(Task{Name: "test task"})
+			newTask, err := store.CreateTask(Task{Name: "test task"})
 			require.NoError(t, err)
 
 			newNote, err := store.AddNote(newTask.ID, tc.note)
@@ -62,7 +62,7 @@ func TestGetTaskNotes(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	created, err := store.Create(Task{Name: "Task with notes"})
+	created, err := store.CreateTask(Task{Name: "Task with notes"})
 	require.NoError(t, err)
 
 	note := Note{Text: "testing"}
@@ -80,7 +80,7 @@ func TestGetTaskNoteCount(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	created, err := store.Create(Task{Name: "Task with notes"})
+	created, err := store.CreateTask(Task{Name: "Task with notes"})
 	require.NoError(t, err)
 
 	note := Note{Text: "testing"}
@@ -104,7 +104,7 @@ func TestUpdateTaskNote(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	task, err := store.Create(Task{Name: "new task"})
+	task, err := store.CreateTask(Task{Name: "new task"})
 	require.NoError(t, err)
 
 	note, err := store.AddNote(task.ID, Note{Text: "new note"})
@@ -126,7 +126,7 @@ func TestDeleteNote(t *testing.T) {
 	store, cleanup := _newBoltStore(t)
 	defer cleanup()
 
-	task, err := store.Create(Task{Name: "new task"})
+	task, err := store.CreateTask(Task{Name: "new task"})
 	require.NoError(t, err)
 
 	note, err := store.AddNote(task.ID, Note{Text: "new note"})

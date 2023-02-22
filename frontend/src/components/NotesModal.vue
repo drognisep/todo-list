@@ -22,7 +22,7 @@
 
 <script>
 import Modal from "./Modal.vue";
-import {AddNote, GetTaskNotes} from "../wailsjs/go/main/TaskController.js";
+import {AddNote, GetTaskNotes} from "../wailsjs/go/main/ModelController.js";
 import {EventsOff, EventsOn} from "../wailsjs/runtime/runtime.js";
 import NoteView from "./NoteView.vue";
 

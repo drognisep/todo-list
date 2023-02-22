@@ -9,9 +9,9 @@
     <div class="actions">
       <span :title="$props.task.done ? 'Reopen' : 'Complete'" class="material-icons check" @click="taskDone">{{ checkLigature }}</span>
       <span title="Pin" :class="['material-icons','favorite',$props.task.favorite ? 'favored' : '']" @click="taskFavorite">push_pin</span>
-      <span title="Notes" class="material-icons notes" @click="toggleShowNotes">comment</span>
+      <span title="Notes" :class="notesClasses" @click="toggleShowNotes">comment</span>
       <span title="Delete" class="material-icons delete" @click="deleteTask">delete</span>
-      <span :title="trackingTitle" class="material-icons" @click="toggleTracking">{{trackingLigature}}</span>
+      <span :title="trackingTitle" :class="trackingClasses" @click="toggleTracking">{{trackingLigature}}</span>
     </div>
     <TaskModal
         v-show="showUpdate"
@@ -31,8 +31,9 @@
 <script>
 import Modal from "./Modal.vue";
 import TaskModal from "./TaskModal.vue";
-import {StartTask, StopTask} from "../wailsjs/go/main/TaskController.js";
+import {StartTask, StopTask, GetTaskNoteCount} from "../wailsjs/go/main/ModelController.js";
 import NotesModal from "./NotesModal.vue";
+import {EventsOn} from "../wailsjs/runtime/runtime.js";
 
 const descLimit = 50;
 const nameLimit = 50;
@@ -49,6 +50,7 @@ export default {
     return {
       showUpdate: false,
       showNotes: false,
+      noteCount: 0,
     }
   },
   methods: {
@@ -165,6 +167,34 @@ export default {
       }
       return "Track time";
     },
+    notesClasses() {
+      let classes = ['material-icons', 'notes'];
+      if (this.noteCount > 0) {
+        classes.push('has-notes');
+      }
+      return classes;
+    },
+    trackingClasses() {
+      let classes = ['material-icons', 'tracking'];
+      if (this.tracking) {
+        classes.push('can-stop');
+      }
+      return classes;
+    },
+  },
+  created() {
+    GetTaskNoteCount(this.task.id)
+        .then(count => {
+          this.noteCount = count;
+        })
+        .catch(console.errorEvent);
+    EventsOn("notesUpdated", () => {
+      GetTaskNoteCount(this.task.id)
+          .then(count => {
+            this.noteCount = count;
+          })
+          .catch(console.errorEvent);
+    });
   },
 }
 </script>
@@ -291,5 +321,13 @@ div.name-cell {
 
 .row.done .material-icons.priority {
   color: gray;
+}
+
+.material-icons.notes.has-notes {
+  color: var(--fg-happy);
+}
+
+.material-icons.tracking.can-stop {
+  color: var(--fg-danger);
 }
 </style>

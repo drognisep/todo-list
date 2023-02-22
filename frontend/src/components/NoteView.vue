@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import {DeleteNote, UpdateNote} from "../wailsjs/go/main/TaskController.js";
+import {DeleteNote, UpdateNote} from "../wailsjs/go/main/ModelController.js";
 
 export default {
   name: "NoteView",
@@ -26,7 +26,7 @@ export default {
     },
     stopEdit() {
       this.editing = false;
-      if (this.node.text.length === 0) {
+      if (this.note.text.length === 0) {
         UpdateNote(this.note.id, this.note.text)
             .catch(console.errorEvent);
       }

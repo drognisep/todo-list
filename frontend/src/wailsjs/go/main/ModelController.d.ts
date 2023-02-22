@@ -13,6 +13,8 @@ export function DeleteNote(arg1:number):Promise<Error>;
 
 export function DeleteTask(arg1:number):Promise<Error>;
 
+export function DeleteTimeEntry(arg1:number):Promise<Error>;
+
 export function Export():Promise<string>;
 
 export function GetAllTasks():Promise<Array<data.Task>>;
@@ -40,3 +42,5 @@ export function StopTask():Promise<Error>;
 export function UpdateNote(arg1:number,arg2:string):Promise<data.Note>;
 
 export function UpdateTask(arg1:number,arg2:data.Task):Promise<data.Task>;
+
+export function UpdateTimeEntry(arg1:number,arg2:data.TimeEntry):Promise<data.TimeEntry>;

@@ -35,6 +35,24 @@ function duration(start, end) {
     return [hours, minutes, seconds];
 }
 
+const durationClockRegex = /^(\d{2}):(\d{2})(:(\d{2}))?$/
+
+export function isDurationClock(str) {
+    return durationClockRegex.test(str);
+}
+
+export function parseDurationClock(str) {
+    if (!isDurationClock(str)) {
+        return 0;
+    }
+    let matches = str.match(durationClockRegex);
+    let value = parseInt(matches[1], 10) * hour + parseInt(matches[2], 10) * minute
+    if (matches[3]) {
+        return value + parseInt(matches[4], 10) * second;
+    }
+    return value;
+}
+
 export function durationClock(start, end) {
     let [hours, minutes, seconds] = duration(start, end);
     if (hours < 10) {

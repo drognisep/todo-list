@@ -75,18 +75,18 @@ func lastWeekday(goal time.Weekday, given time.Time) time.Time {
 
 // TaskStorage facilitates persistence operations for Task data.
 type TaskStorage interface {
-	// Get will retrieve Tasks that match the given filter(s), or all Tasks.
-	Get(...TaskFilter) ([]Task, error)
-	// GetHistoric will behave like Get, except that it will also get soft-deleted Tasks.
-	GetHistoric(...TaskFilter) ([]Task, error)
-	// Count will count the number of Tasks in the data store.
-	Count() (int, error)
-	// Create will create a new Task using the given template Task.
-	Create(template Task) (Task, error)
-	// Update will update the state of a Task referenced by id with the given template Task.
-	Update(id uint64, template Task) (Task, error)
-	// Delete will inactivate a Task record in the store by marking it as soft-deleted.
-	Delete(id uint64) error
+	// GetTasks will retrieve Tasks that match the given filter(s), or all Tasks.
+	GetTasks(...TaskFilter) ([]Task, error)
+	// GetHistoricTasks will behave like Get, except that it will also get soft-deleted Tasks.
+	GetHistoricTasks(...TaskFilter) ([]Task, error)
+	// CountTasks will count the number of Tasks in the data store.
+	CountTasks() (int, error)
+	// CreateTask will create a new Task using the given template Task.
+	CreateTask(template Task) (Task, error)
+	// UpdateTask will update the state of a Task referenced by id with the given template Task.
+	UpdateTask(id uint64, template Task) (Task, error)
+	// DeleteTask will inactivate a Task record in the store by marking it as soft-deleted.
+	DeleteTask(id uint64) error
 	// Export will write all Task data in the store to a timestamped CSV file in the given directory.
 	// If Export is successful, it will return the file system location of the exported data.
 	Export(dir string) (string, error)
@@ -106,6 +106,10 @@ type TaskStorage interface {
 	GetTimeEntries(filters ...TimeEntryFilter) ([]TimeEntry, error)
 	// GetRunningTimeEntry returns the latest running time entry, if one exist.
 	GetRunningTimeEntry() (*TimeEntry, error)
+	// UpdateTimeEntry allows changing a time entry after it has been created.
+	UpdateTimeEntry(id uint64, newState TimeEntry) (TimeEntry, error)
+	// DeleteTimeEntry deletes the TimeEntry from the store.
+	DeleteTimeEntry(id uint64) error
 	// AddNote adds a Note to a Task identified by taskID.
 	AddNote(taskID uint64, note Note) (Note, error)
 	// GetTaskNotes gets a list of Note related to the Task identified by taskID.

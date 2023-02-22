@@ -39,7 +39,7 @@ import {
   GetAllTasks,
   GetTrackedTaskDetails,
   UpdateTask
-} from "../wailsjs/go/main/TaskController.js";
+} from "../wailsjs/go/main/ModelController.js";
 import Modal from "../components/Modal.vue";
 import TaskRow from "../components/TaskRow.vue";
 import TaskModal from "../components/TaskModal.vue";

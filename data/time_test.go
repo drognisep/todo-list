@@ -32,6 +32,38 @@ func TestTimeEntry_Duration_Neg(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(data), &entry))
 	assert.Equal(t, time.Duration(0), entry.Duration())
 }
+func TestBoltStorage_UpdateTimeEntry(t *testing.T) {
+	store, cleanup := _newBoltStore(t)
+	defer cleanup()
+
+	task := Task{
+		Name: "sometask",
+	}
+	var err error
+	task, err = store.CreateTask(task)
+	require.NoError(t, err)
+
+	entry, err := store.StartTimeEntry(task.ID)
+	require.NoError(t, err)
+
+	entry.Start = time.Now().Add(-5 * time.Minute)
+	updated, err := store.UpdateTimeEntry(entry.ID, entry)
+	assert.NoError(t, err)
+	assert.Equal(t, entry.ID, updated.ID)
+
+	assert.NoError(t, store.StopTimeEntry(entry.ID))
+	updated, err = store.GetTimeEntry(updated.ID)
+	assert.NoError(t, err)
+	assert.NotNil(t, updated.End)
+
+	curDur := updated.Duration()
+	newEnd := time.Now().Add(5 * time.Minute)
+	updated.End = &newEnd
+	updated, err = store.UpdateTimeEntry(updated.ID, updated)
+	assert.NoError(t, err)
+	assert.NotEqual(t, curDur, updated.Duration())
+	assert.True(t, updated.Duration() > curDur, "Cached duration should be less than or equal to new duration")
+}
 
 func TestLastWeekday(t *testing.T) {
 	day := 24 * time.Hour

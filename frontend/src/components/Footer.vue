@@ -2,6 +2,7 @@
   <div id="footer">
     <div class="left">
       <p v-if="isTracking" v-text="taskDetailsString"></p>
+      <span v-if="isTracking" @click="stopTask" class="material-icons footer-tracking">stop</span>
     </div>
     <div class="right">
       <span v-show="hasWarnings" title="Warnings" class="warn-count badge"
@@ -24,7 +25,7 @@
 <script>
 import {EventsOff, EventsOn} from "../wailsjs/runtime/runtime.js";
 import {LogEventName} from "../wailsjs/go/eventlog/EventLog.js";
-import {GetTrackedTaskDetails} from "../wailsjs/go/main/TaskController.js";
+import {GetTrackedTaskDetails, StopTask} from "../wailsjs/go/main/ModelController.js";
 import Modal from "./Modal.vue";
 import {durationClock} from "../datetime.js";
 
@@ -90,6 +91,10 @@ export default {
       this.trackedDetails = null;
       this.secondsTracked = 0;
     },
+    stopTask() {
+      StopTask()
+          .catch(console.errorEvent);
+    },
   },
   computed: {
     logString() {
@@ -141,6 +146,10 @@ export default {
         .catch(console.errorEvent);
     EventsOn("taskStarted", this.onTaskStarted)
     EventsOn("taskStopped", this.onTaskStopped)
+    EventsOn("entriesChanged", () => {
+      this.onTaskStopped();
+      this.onTaskStarted();
+    })
   },
   destroyed() {
     LogEventName()
@@ -209,5 +218,10 @@ export default {
   width: 100%;
   height: 100%;
   resize: none;
+}
+
+.material-icons.footer-tracking {
+  color: var(--fg-danger);
+  cursor: pointer;
 }
 </style>

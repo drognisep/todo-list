@@ -57,7 +57,7 @@ func TestBoltStorage_Export(t *testing.T) {
 		Name: "Some name",
 	}
 
-	created, err := tstore.Create(newTask)
+	created, err := tstore.CreateTask(newTask)
 	assert.NoError(t, err)
 
 	temp, err := os.MkdirTemp("", "export_*")
@@ -69,17 +69,17 @@ func TestBoltStorage_Export(t *testing.T) {
 	snapshot, err := tstore.Export(temp)
 	require.NoError(t, err)
 
-	assert.NoError(t, tstore.Delete(created.ID))
-	count, err := tstore.Count()
+	assert.NoError(t, tstore.DeleteTask(created.ID))
+	count, err := tstore.CountTasks()
 	assert.NoError(t, err)
 	assert.Equal(t, 0, count, "Soft deleted task should not show up with count")
 
 	require.NoError(t, tstore.Import(snapshot, MergeOverwrite))
-	count, err = tstore.Count()
+	count, err = tstore.CountTasks()
 	assert.NoError(t, err)
 	require.Equal(t, 1, count, "Snapshot will overwrite state of the soft-deleted task")
 
-	found, err := tstore.Get(WithID(created.ID))
+	found, err := tstore.GetTasks(WithID(created.ID))
 	assert.NoError(t, err)
 	assert.Equal(t, created, found[0])
 }
@@ -100,7 +100,7 @@ func TestBoltStorage_Import(t *testing.T) {
 
 	require.NoError(t, tstore.Import(temp.Name(), MergeError))
 
-	found, err := tstore.Get()
+	found, err := tstore.GetTasks()
 	assert.NoError(t, err)
 	require.Len(t, found, 1)
 	assert.Equal(t, Task{
@@ -172,7 +172,7 @@ func TestBoltStorage_Import_no_ID_conflict(t *testing.T) {
 
 	require.NoError(t, tstore.Import(temp.Name(), MergeError))
 
-	created, err := tstore.Create(Task{
+	created, err := tstore.CreateTask(Task{
 		Name:        "Possible conflict",
 		Description: "This should have an ID after what has been imported",
 	})
@@ -275,7 +275,7 @@ func TestBoltStorage_Import_ID_conflict_append(t *testing.T) {
 
 	// First, create the conflicting record.
 	// This should be considered the local source of truth.
-	created, err := tstore.Create(Task{
+	created, err := tstore.CreateTask(Task{
 		Name: "I'm a problem",
 	})
 	require.NoError(t, err)
@@ -339,7 +339,7 @@ func TestBoltStorage_Import_ID_sequence_conflict_append(t *testing.T) {
 
 	// First, create the conflicting record.
 	// This should be considered the local source of truth.
-	created, err := tstore.Create(Task{
+	created, err := tstore.CreateTask(Task{
 		Name: "I'm a problem",
 	})
 	require.NoError(t, err)
@@ -364,7 +364,7 @@ func TestBoltStorage_Import_ID_sequence_conflict_append(t *testing.T) {
 		3: true,
 		4: true,
 	}
-	tasks, err := tstore.Get()
+	tasks, err := tstore.GetTasks()
 	assert.NoError(t, err)
 	assert.Len(t, tasks, 4)
 	for _, task := range tasks {

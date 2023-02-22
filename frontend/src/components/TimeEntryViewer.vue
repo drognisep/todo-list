@@ -54,7 +54,7 @@
 
 <script>
 import TimeEntryViewerRow from "./TimeEntryViewerRow.vue";
-import {GetSummaryForEntries} from "../wailsjs/go/main/TaskController.js";
+import {GetSummaryForEntries} from "../wailsjs/go/main/ModelController.js";
 
 export default {
   name: "TimeEntryViewer",
