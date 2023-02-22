@@ -46,10 +46,11 @@ export function parseDurationClock(str) {
         return 0;
     }
     let matches = str.match(durationClockRegex);
+    let value = parseInt(matches[1], 10) * hour + parseInt(matches[2], 10) * minute
     if (matches[3]) {
-        return parseInt(matches[1], 10) * hour + parseInt(matches[2], 10) * minute + parseInt(matches[4], 10) * second;
+        return value + parseInt(matches[4], 10) * second;
     }
-    return parseInt(matches[1], 10) * hour + parseInt(matches[2], 10) * minute;
+    return value;
 }
 
 export function durationClock(start, end) {
