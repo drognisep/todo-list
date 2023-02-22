@@ -1,5 +1,5 @@
 import {expect, test} from "vitest";
-import {durationClock, durationGo, formatClockTime, weekday, weekdaySemantic} from "./datetime.js";
+import {durationClock, durationGo, formatClockTime, weekday, weekdaySemantic, parseDurationClock} from "./datetime.js";
 
 const second = 1000;
 const minute = second * 60;
@@ -77,4 +77,16 @@ test('Weekday semantic should identify yesterday, today, and tomorrow', () => {
 test('Format clock time should work as expected', () => {
     let date = new Date(2023, 0, 3, 1, 2, 3, 100);
     expect(formatClockTime(date)).eq('01:02:03');
+})
+
+test('Parsed clock time works as expected', () => {
+    let given = "01:02:03"
+    let val = parseDurationClock(given);
+    expect(val).eq(hour + 2 * minute + 3 * second);
+})
+
+test('Parsed clock time works without seconds', () => {
+    let given = "01:02"
+    let val = parseDurationClock(given);
+    expect(val).eq(hour + 2 * minute);
 })
